@@ -25,10 +25,11 @@ type counter struct {
 }
 
 const (
-	defaultServer  = "http://localhost"
-	defaultPort    = "8080"
-	contentType    = "text/plain"
-	defaultTimeout = 2 * time.Second
+	defaultProtocol = "http://"
+	defaultServer   = "localhost"
+	defaultPort     = "8080"
+	contentType     = "text/plain"
+	defaultTimeout  = 2 * time.Second
 )
 
 const (
@@ -41,7 +42,7 @@ var PollCount int64
 
 // SendGauge отправить данные на сервер
 func (g gauge) SendGauge(client *http.Client) (bool, error) {
-	url := fmt.Sprintf(defaultServer+":"+defaultPort+"/update/%s/%s/%d", "gauge", g.name, int(g.value))
+	url := fmt.Sprintf(defaultProtocol+defaultServer+":"+defaultPort+"/update/%s/%s/%d", "gauge", g.name, int(g.value))
 	log.Println("SendGauge " + url)
 	resp, err := client.Post(url, "text/plain", nil)
 	if err != nil {
@@ -57,7 +58,7 @@ func (g gauge) SendGauge(client *http.Client) (bool, error) {
 }
 
 func (c counter) SendCounter(client *http.Client) (bool, error) {
-	url := fmt.Sprintf(defaultServer+":"+defaultPort+"/update/%s/%s/%d", "counter", c.name, c.value)
+	url := fmt.Sprintf(defaultProtocol+defaultServer+":"+defaultPort+"/update/%s/%s/%d", "counter", c.name, c.value)
 	log.Println("SendCounter " + url)
 	resp, err := client.Post(url, contentType, nil)
 	if err != nil {

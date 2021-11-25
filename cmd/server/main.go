@@ -83,7 +83,7 @@ func NotImplemented(w http.ResponseWriter, r *http.Request) {
 }
 
 func NotFound(w http.ResponseWriter, r *http.Request) {
-	http.Error(w, "NotImplemented", http.StatusNotFound)
+	http.Error(w, "StatusNotFound", http.StatusNotFound)
 }
 
 func StartServer() {
@@ -91,7 +91,7 @@ func StartServer() {
 	router := chi.NewRouter()
 	router.Get("/", GetAllHandler)
 	router.Post("/*", NotFound)
-	router.Post("/update/*", NotFound)
+	router.Post("/update/*", NotImplemented)
 	router.Post("/update/gauge/{name}/{value}", GetMetricHandler)
 	router.Post("/update/counter/{name}/{value}", GetMetricHandler)
 
