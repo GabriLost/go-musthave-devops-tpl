@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-func TestGetMetricHandlerHandler(t *testing.T) {
+func TestPostMetricHandler(t *testing.T) {
 	tests := []struct {
 		description  string
 		requestURL   string
@@ -29,7 +29,7 @@ func TestGetMetricHandlerHandler(t *testing.T) {
 		},
 		{
 			description:  "400 Parse Error",
-			requestURL:   "/update/counter/PollCount/666",
+			requestURL:   "/update/counter/PollCount/665g6",
 			expectedCode: 400,
 		},
 		{
@@ -47,7 +47,7 @@ func TestGetMetricHandlerHandler(t *testing.T) {
 		t.Run(url.description, func(t *testing.T) {
 			request := httptest.NewRequest(http.MethodPost, url.requestURL, nil)
 			recorder := httptest.NewRecorder()
-			handlerFunc := http.HandlerFunc(GetMetricHandler)
+			handlerFunc := http.HandlerFunc(PostMetricHandler)
 			handlerFunc.ServeHTTP(recorder, request)
 			result := recorder.Result()
 			if result.StatusCode != url.expectedCode {
@@ -79,7 +79,7 @@ func TestNotFound(t *testing.T) {
 		t.Run(url.description, func(t *testing.T) {
 			request := httptest.NewRequest(http.MethodPost, url.requestURL, nil)
 			recorder := httptest.NewRecorder()
-			handlerFunc := http.HandlerFunc(NotFound)
+			handlerFunc := http.HandlerFunc(NotFoundHandler)
 			handlerFunc.ServeHTTP(recorder, request)
 			result := recorder.Result()
 			if result.StatusCode != url.expectedCode {
