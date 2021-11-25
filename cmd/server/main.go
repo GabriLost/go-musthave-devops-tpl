@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"github.com/go-chi/chi"
 	"log"
 	"net/http"
@@ -53,7 +54,7 @@ func GetAllHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func GetMetricHandler(w http.ResponseWriter, r *http.Request) {
+func PostMetricHandler(w http.ResponseWriter, r *http.Request) {
 	uri := r.RequestURI
 
 	if len(strings.Split(uri, "/")) != 5 {
@@ -78,22 +79,40 @@ func GetMetricHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func NotImplemented(w http.ResponseWriter, r *http.Request) {
-	http.Error(w, "NotImplemented", http.StatusNotImplemented)
+func GetMetricHandler(w http.ResponseWriter, r *http.Request) {
+	metricType := strings.Split(r.URL.Path, "/")[2]
+	metricName := strings.Split(r.URL.Path, "/")[3]
+	if metricType == "counter" || metricType == "gauge" {
+		if val, found := metrics[metricName]; found {
+			w.WriteHeader(http.StatusOK)
+			w.Header().Add("Content-Type", "application/json")
+			_, err := w.Write([]byte(fmt.Sprint(val)))
+			if err != nil {
+				return
+			}
+		} else {
+			http.Error(w, "There is no metric you requested", http.StatusNotFound)
+		}
+	}
 }
 
-func NotFound(w http.ResponseWriter, r *http.Request) {
-	http.Error(w, "StatusNotFound", http.StatusNotFound)
+func NotImplementedHandler(w http.ResponseWriter, r *http.Request) {
+	http.Error(w, "Method is not implemented yet", http.StatusNotImplemented)
+}
+
+func NotFoundHandler(w http.ResponseWriter, r *http.Request) {
+	http.Error(w, "Not Found", http.StatusNotFound)
 }
 
 func StartServer() {
 
 	router := chi.NewRouter()
 	router.Get("/", GetAllHandler)
-	router.Post("/*", NotFound)
-	router.Post("/update/*", NotImplemented)
+	router.Get("/value/*", GetMetricHandler)
 	router.Post("/update/gauge/{name}/{value}", GetMetricHandler)
 	router.Post("/update/counter/{name}/{value}", GetMetricHandler)
+	router.Post("/update/{name}/", NotFoundHandler)
+	router.Post("/update/*", NotImplementedHandler)
 
 	server := &http.Server{
 		Addr:    defaultServer + ":" + defaultPort,
