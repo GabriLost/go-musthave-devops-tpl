@@ -28,6 +28,11 @@ func TestGetMetricHandlerHandler(t *testing.T) {
 			expectedCode: 400,
 		},
 		{
+			description:  "400 Parse Error",
+			requestURL:   "/update/counter/PollCount/666",
+			expectedCode: 400,
+		},
+		{
 			description:  "400 No such metric",
 			requestURL:   "/update/wrong/doSomeThingElse/123",
 			expectedCode: 400,
@@ -80,6 +85,37 @@ func TestNotFound(t *testing.T) {
 			if result.StatusCode != url.expectedCode {
 				t.Errorf("Expected status code %d, but got %d", url.expectedCode, recorder.Code)
 			}
+			result.Body.Close()
+		})
+	}
+}
+
+func TestGetAllHandler(t *testing.T) {
+	tests := []struct {
+		name string
+		url  string
+	}{
+		{
+			name: "One",
+			url:  "/",
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			recorder := httptest.NewRecorder()
+			request := httptest.NewRequest(http.MethodGet, test.url, nil)
+			handlerFunc := http.HandlerFunc(GetAllHandler)
+			handlerFunc.ServeHTTP(recorder, request)
+			result := recorder.Result()
+
+			if result.Body == http.NoBody {
+				t.Error("Body is empty")
+			}
+
+			if result.StatusCode != http.StatusOK {
+				t.Errorf("StatusCode must be %d, but got %d", http.StatusOK, result.StatusCode)
+			}
+
 			result.Body.Close()
 		})
 	}
