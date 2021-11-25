@@ -91,7 +91,7 @@ func StartServer() {
 	router := chi.NewRouter()
 	router.Get("/", GetAllHandler)
 	router.Post("/*", NotFound)
-	router.Post("/update/*", NotImplemented)
+	router.Post("/update/*", NotFound)
 	router.Post("/update/gauge/{name}/{value}", GetMetricHandler)
 	router.Post("/update/counter/{name}/{value}", GetMetricHandler)
 
