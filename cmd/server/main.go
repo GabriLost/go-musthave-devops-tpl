@@ -54,7 +54,7 @@ func GetAllHandler(w http.ResponseWriter, r *http.Request) {
 
 func MetricHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		http.Error(w, "Only GET requests are allowed!", http.StatusMethodNotAllowed)
+		http.Error(w, "Only GET requests are allowed!", http.StatusNotFound)
 		return
 	}
 	uri := r.RequestURI
@@ -76,11 +76,18 @@ func NotImplemented(w http.ResponseWriter, r *http.Request) {
 	http.Error(w, "NotImplemented", http.StatusNotImplemented)
 }
 
+func NotFound(w http.ResponseWriter, r *http.Request) {
+	http.Error(w, "NotImplemented", http.StatusNotFound)
+}
+
 func StartServer() {
 
 	http.HandleFunc("/", GetAllHandler)
 	http.HandleFunc("/update/gauge/", MetricHandler)
+	http.HandleFunc("/update/gauge", NotFound)
 	http.HandleFunc("/update/counter/", MetricHandler)
+	http.HandleFunc("/update/counter", NotFound)
+
 	http.HandleFunc("/update/", NotImplemented)
 
 	server := &http.Server{
