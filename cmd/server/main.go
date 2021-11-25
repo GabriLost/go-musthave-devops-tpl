@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/go-chi/chi"
 	"log"
 	"net/http"
 	"os"
@@ -52,18 +53,23 @@ func GetAllHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func MetricHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		http.Error(w, "Only GET requests are allowed!", http.StatusNotFound)
+func GetMetricHandler(w http.ResponseWriter, r *http.Request) {
+	uri := r.RequestURI
+
+	if len(strings.Split(uri, "/")) != 5 {
+		http.Error(w, "URI too long or too short", http.StatusBadRequest)
 		return
 	}
-	uri := r.RequestURI
+	metric := strings.Split(uri, "/")[2]
 	name := strings.Split(uri, "/")[3]
 	value := strings.Split(uri, "/")[4]
 	_, err1 := strconv.ParseFloat(value, 64)
 	_, err2 := strconv.ParseInt(value, 10, 64)
 	if err1 != nil && err2 != nil {
 		http.Error(w, "parsing error", http.StatusBadRequest)
+		return
+	} else if metric != "gauge" && metric != "counter" {
+		http.Error(w, "No such type of metric", http.StatusBadRequest)
 		return
 	} else {
 		metrics[name] = value
@@ -82,16 +88,15 @@ func NotFound(w http.ResponseWriter, r *http.Request) {
 
 func StartServer() {
 
-	http.HandleFunc("/", GetAllHandler)
-	http.HandleFunc("/update/gauge/", MetricHandler)
-	http.HandleFunc("/update/gauge", NotFound)
-	http.HandleFunc("/update/counter/", MetricHandler)
-	http.HandleFunc("/update/counter", NotFound)
-
-	http.HandleFunc("/update/", NotImplemented)
+	router := chi.NewRouter()
+	router.Get("/", GetAllHandler)
+	router.Post("/*", NotFound)
+	router.Post("/update/gauge/{name}/{value}", GetMetricHandler)
+	router.Post("/update/counter/{name}/{value}", GetMetricHandler)
 
 	server := &http.Server{
-		Addr: defaultServer + ":" + defaultPort,
+		Addr:    defaultServer + ":" + defaultPort,
+		Handler: router,
 	}
 	server.SetKeepAlivesEnabled(false)
 	log.Printf("listening on port " + defaultPort)
