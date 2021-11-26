@@ -51,9 +51,12 @@ func TestPostMetricHandler(t *testing.T) {
 			handlerFunc.ServeHTTP(recorder, request)
 			result := recorder.Result()
 			if result.StatusCode != url.expectedCode {
-				t.Errorf("Expected status code %d, but got %d", url.expectedCode, recorder.Code)
+				t.Errorf("Expected %d, but got %d", url.expectedCode, recorder.Code)
 			}
-			result.Body.Close()
+			err := result.Body.Close()
+			if err != nil {
+				return
+			}
 		})
 	}
 }
@@ -85,7 +88,10 @@ func TestNotFound(t *testing.T) {
 			if result.StatusCode != url.expectedCode {
 				t.Errorf("Expected status code %d, but got %d", url.expectedCode, recorder.Code)
 			}
-			result.Body.Close()
+			err := result.Body.Close()
+			if err != nil {
+				return
+			}
 		})
 	}
 }
@@ -116,7 +122,10 @@ func TestGetAllHandler(t *testing.T) {
 				t.Errorf("StatusCode must be %d, but got %d", http.StatusOK, result.StatusCode)
 			}
 
-			result.Body.Close()
+			err := result.Body.Close()
+			if err != nil {
+				return
+			}
 		})
 	}
 }

@@ -45,7 +45,7 @@ const HTMLPage = `
 </div>
 `
 
-func GetAllHandler(w http.ResponseWriter, r *http.Request) {
+func GetAllHandler(w http.ResponseWriter, _ *http.Request) {
 	templateDataMap["metrics"] = metrics
 	tmpl := template.Must(template.New("").Parse(HTMLPage))
 	err := tmpl.Execute(w, templateDataMap)
@@ -96,11 +96,11 @@ func GetMetricHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func NotImplementedHandler(w http.ResponseWriter, r *http.Request) {
+func NotImplementedHandler(w http.ResponseWriter, _ *http.Request) {
 	http.Error(w, "Method is not implemented yet", http.StatusNotImplemented)
 }
 
-func NotFoundHandler(w http.ResponseWriter, r *http.Request) {
+func NotFoundHandler(w http.ResponseWriter, _ *http.Request) {
 	http.Error(w, "Not Found", http.StatusNotFound)
 }
 

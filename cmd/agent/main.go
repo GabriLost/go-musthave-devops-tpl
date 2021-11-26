@@ -94,7 +94,10 @@ func SendData(metrics []gauge) {
 	metricCounter := counter{name: "PollCount", value: PollCount}
 	log.Println("Reset poll counter to zero")
 	PollCount = 0
-	metricCounter.SendCounter(&client)
+	_, err := metricCounter.SendCounter(&client)
+	if err != nil {
+		return
+	}
 	client.CloseIdleConnections()
 }
 
@@ -140,7 +143,7 @@ func GetRuntimeMetrics() {
 	}
 }
 
-//
+//попробовать обернуть в шедулер
 //func schedule(f func(), interval time.Duration) *time.Ticker {
 //	ticker := time.NewTicker(interval)
 //	go func() {
