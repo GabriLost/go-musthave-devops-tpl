@@ -102,7 +102,7 @@ func TestGetAllHandler(t *testing.T) {
 		url  string
 	}{
 		{
-			name: "One",
+			name: "Check body isn't empty",
 			url:  "/",
 		},
 	}
