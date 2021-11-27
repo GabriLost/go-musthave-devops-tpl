@@ -22,7 +22,7 @@ const (
 var metrics = make(map[string]string)
 
 func GetAllHandler(w http.ResponseWriter, _ *http.Request) {
-	indexPage, err := os.ReadFile("cmd/server/index.html")
+	indexPage, err := os.ReadFile("index.html")
 	if err != nil {
 		log.Println(err)
 		os.Exit(1)
