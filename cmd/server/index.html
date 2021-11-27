@@ -1,0 +1,19 @@
+<div>
+    <h1>Metric monitor</h1>
+    <table>
+        <thead>
+        <tr>
+            <th>Name</th>
+            <th>Value </th>
+        </tr>
+        </thead>
+        <tbody>
+        {{ range $key, $val :=  .values }}
+        <tr>
+            <td>{{$key}}</td>
+            <td>{{$val}}</td>
+        </tr>
+        {{end}}
+        </tbody>
+    </table>
+</div>

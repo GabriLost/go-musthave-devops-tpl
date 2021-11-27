@@ -21,39 +21,22 @@ const (
 
 var metrics = make(map[string]string)
 
-var templateDataMap = make(map[string]interface{})
-
-const HTMLPage = `
-<div>
-	<h1>Metric monitor</h1>
-	<table>
-		<thead>
-			<tr>
-				<th>Name</th>
-				<th>Value </th>
-			</tr>
-		</thead>
-		<tbody>
-			{{ range $key, $val :=  .metrics }}
-				<tr>
-					<td>{{$key}}</td>
-					<td>{{$val}}</td>
-				</tr>
-			{{end}}
-		</tbody>
-	</table>
-</div>
-`
-
 func GetAllHandler(w http.ResponseWriter, _ *http.Request) {
-	templateDataMap["metrics"] = metrics
-	tmpl := template.Must(template.New("").Parse(HTMLPage))
-	err := tmpl.Execute(w, templateDataMap)
+	indexPage, err := os.ReadFile("cmd/server/index.html")
+	if err != nil {
+		log.Println(err)
+		os.Exit(1)
+	}
+	indexTemplate := template.Must(template.New("").Parse(string(indexPage)))
+	tmp := make(map[string]interface{})
+	tmp["values"] = metrics
+	err = indexTemplate.Execute(w, tmp)
 	if err != nil {
 		return
 	}
 }
 
+// PostMetricHandler todo разделить на два метода
 func PostMetricHandler(w http.ResponseWriter, r *http.Request) {
 	uri := r.RequestURI
 
@@ -67,13 +50,19 @@ func PostMetricHandler(w http.ResponseWriter, r *http.Request) {
 	_, err1 := strconv.ParseFloat(value, 64)
 	_, err2 := strconv.ParseInt(value, 10, 64)
 	if err1 != nil && err2 != nil {
-		http.Error(w, "parsing error", http.StatusBadRequest)
+		http.Error(w, "Number parsing error", http.StatusBadRequest)
 		return
 	} else if metric != "gauge" && metric != "counter" {
 		http.Error(w, "No such type of metric", http.StatusBadRequest)
 		return
 	} else {
-		metrics[name] = value
+		if metric == "counter" {
+			value1, _ := strconv.ParseInt(value, 10, 64)
+			value2, _ := strconv.ParseInt(metrics[name], 10, 64)
+			metrics[name] = fmt.Sprintf("%d", value1+value2)
+		} else {
+			metrics[name] = value
+		}
 		w.Header().Add("Content-Type", contentType)
 		w.WriteHeader(http.StatusOK)
 	}

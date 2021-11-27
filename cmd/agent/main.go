@@ -29,6 +29,7 @@ const (
 	defaultServer   = "localhost"
 	defaultPort     = "8080"
 	contentType     = "text/plain"
+	tcp             = "tcp"
 	defaultTimeout  = 2 * time.Second
 )
 
@@ -81,7 +82,6 @@ func SendDataAsync() {
 }
 
 func SendData(metrics []gauge) {
-	log.Println("Total metrics is ", len(metrics))
 	metrics = AddRandomMetrics(metrics)
 	log.Println("Total metrics is ", len(metrics))
 	client := http.Client{Timeout: defaultTimeout}

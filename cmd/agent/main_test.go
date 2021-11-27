@@ -8,10 +8,6 @@ import (
 	"testing"
 )
 
-const (
-	tcp = "tcp"
-)
-
 func Test_SendCounter_And_SendGauge(t *testing.T) {
 	type fields struct {
 		name  string
@@ -26,7 +22,7 @@ func Test_SendCounter_And_SendGauge(t *testing.T) {
 	}{
 		{
 			name:        "Send Counter",
-			fields:      fields{name: "PollCount", value: 9},
+			fields:      fields{name: "PollCount", value: 5},
 			client:      &http.Client{Timeout: defaultTimeout},
 			want:        true,
 			expectError: false,
