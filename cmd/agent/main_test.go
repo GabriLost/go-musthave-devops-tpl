@@ -9,8 +9,7 @@ import (
 )
 
 const (
-	defaultTestPort = "8081"
-	tcp             = "tcp"
+	tcp = "tcp"
 )
 
 func Test_SendCounter_And_SendGauge(t *testing.T) {
@@ -47,7 +46,7 @@ func Test_SendCounter_And_SendGauge(t *testing.T) {
 				value: test.fields.value,
 			}
 
-			l, err := net.Listen(tcp, defaultServer+":"+defaultTestPort)
+			l, err := net.Listen(tcp, defaultServer+":"+defaultPort)
 			if err != nil {
 				log.Fatal(err)
 			}
