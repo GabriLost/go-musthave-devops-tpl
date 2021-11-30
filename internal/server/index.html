@@ -1,0 +1,36 @@
+<div>
+    <h1>Gauges</h1>
+    <table>
+        <thead>
+        <tr>
+            <th>Name</th>
+            <th>Value </th>
+        </tr>
+        </thead>
+        <tbody>
+        {{ range $key, $val :=  .gauge }}
+        <tr>
+            <td>{{$key}}</td>
+            <td>{{$val}}</td>
+        </tr>
+        {{end}}
+        </tbody>
+    </table>
+    <h1>Counters</h1>
+    <table>
+        <thead>
+        <tr>
+            <th>Name</th>
+            <th>Value </th>
+        </tr>
+        </thead>
+        <tbody>
+        {{ range $key, $val :=  .counter }}
+        <tr>
+            <td>{{$key}}</td>
+            <td>{{$val}}</td>
+        </tr>
+        {{end}}
+        </tbody>
+    </table>
+</div>

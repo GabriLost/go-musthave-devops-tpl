@@ -1,4 +1,4 @@
-package main
+package agent
 
 import (
 	"log"
@@ -23,26 +23,26 @@ func Test_SendCounter_And_SendGauge(t *testing.T) {
 		{
 			name:        "Send Counter",
 			fields:      fields{name: "PollCount", value: 5},
-			client:      &http.Client{Timeout: defaultTimeout},
+			client:      &http.Client{Timeout: DefaultTimeout},
 			want:        true,
 			expectError: false,
 		},
 		{
 			name:        "Send Gauge",
 			fields:      fields{name: "Alloc", value: 1000000},
-			client:      &http.Client{Timeout: defaultTimeout},
+			client:      &http.Client{Timeout: DefaultTimeout},
 			want:        true,
 			expectError: false,
 		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			c := counter{
+			c := Counter{
 				name:  test.fields.name,
 				value: test.fields.value,
 			}
 
-			l, err := net.Listen(tcp, defaultServer+":"+defaultPort)
+			l, err := net.Listen(TCP, DefaultServer+":"+DefaultPort)
 			if err != nil {
 				log.Fatal(err)
 			}
