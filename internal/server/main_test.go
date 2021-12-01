@@ -3,103 +3,127 @@ package server
 import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"io"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 )
 
 func TestMetricHandler(t *testing.T) {
-
+	type want struct {
+		code int
+		body []string
+	}
 	r := Router()
 	server := httptest.NewServer(r)
 	defer server.Close()
 
 	tests := []struct {
-		description  string
-		requestURL   string
-		method       string
-		expectedCode int
+		description string
+		requestURL  string
+		method      string
+		expected    want
 	}{
 		{
-			description:  "200 Success gauge number with dots",
-			requestURL:   "/update/gauge/numberMetric/100500.000",
-			method:       http.MethodPost,
-			expectedCode: 200,
+			description: "200 Success gauge number with dots",
+			requestURL:  "/update/gauge/numberMetric/100500.000",
+			method:      http.MethodPost,
+			expected:    want{code: 200},
 		},
 		{
-			description:  "200 Success gauge number without dots",
-			requestURL:   "/update/gauge/numberMetric/80",
-			method:       http.MethodPost,
-			expectedCode: 200,
+			description: "200 Success gauge number without dots",
+			requestURL:  "/update/gauge/numberMetric/80",
+			method:      http.MethodPost,
+			expected:    want{code: 200},
 		},
 		{
-			description:  "200 Success Counter",
-			requestURL:   "/update/counter/PollCount/5",
-			method:       http.MethodPost,
-			expectedCode: 200,
+			description: "200 Success Counter",
+			requestURL:  "/update/counter/PollCount/5",
+			method:      http.MethodPost,
+			expected:    want{code: 200},
 		},
 		{
-			description:  "400 Parse Error",
-			requestURL:   "/update/gauge/stringMetric/aaa",
-			method:       http.MethodPost,
-			expectedCode: 400,
+			description: "200 Get Counter",
+			requestURL:  "/value/counter/PollCount",
+			method:      http.MethodGet,
+			expected: want{
+				code: 200,
+				body: []string{"5"},
+			},
 		},
 		{
-			description:  "400 Parse Error",
-			requestURL:   "/update/counter/PollCount/665g6",
-			method:       http.MethodPost,
-			expectedCode: 400,
+			description: "200 Update Counter again",
+			requestURL:  "/update/counter/PollCount/1",
+			method:      http.MethodPost,
+			expected:    want{code: 200},
 		},
 		{
-			description:  "400 No such metric",
-			requestURL:   "/update/wrong/doSomeThingElse/123",
-			method:       http.MethodPost,
-			expectedCode: 400,
+			description: "200 Get Counter +1",
+			requestURL:  "/value/counter/PollCount",
+			method:      http.MethodGet,
+			expected: want{
+				code: 200,
+				body: []string{"6"},
+			},
 		},
 		{
-			description:  "501 short uri on update",
-			requestURL:   "/update/shortURI/doSomeThingElse",
-			method:       http.MethodPost,
-			expectedCode: 501,
+			description: "400 Parse Error",
+			requestURL:  "/update/gauge/stringMetric/aaa",
+			method:      http.MethodPost,
+			expected:    want{code: 400},
 		},
 		{
-			description:  "400 bad type",
-			requestURL:   "/update/integer/x/1",
-			method:       http.MethodPost,
-			expectedCode: 400,
+			description: "400 Parse Error",
+			requestURL:  "/update/counter/PollCount/665g6",
+			method:      http.MethodPost,
+			expected:    want{code: 400},
 		},
 		{
-			description:  "get unknown gauge",
-			method:       "GET",
-			requestURL:   "/value/gauge/lol",
-			expectedCode: 404,
+			description: "501 No such metric",
+			requestURL:  "/update/wrong/doSomeThingElse/123",
+			method:      http.MethodPost,
+			expected:    want{code: 501},
 		},
 		{
-			description:  "get unknown counter",
-			method:       "GET",
-			requestURL:   "/value/counter/lol",
-			expectedCode: 404,
+			description: "501 short uri on update",
+			requestURL:  "/update/shortURI/doSomeThingElse",
+			method:      http.MethodPost,
+			expected:    want{code: 501},
 		},
 		{
-			description:  "400 get unknown type",
-			method:       "GET",
-			requestURL:   "/value/wrongType/name",
-			expectedCode: 400,
+			description: "get unknown gauge",
+			method:      http.MethodGet,
+			requestURL:  "/value/gauge/lol",
+			expected:    want{code: 404},
+		},
+		{
+			description: "get unknown counter",
+			method:      http.MethodGet,
+			requestURL:  "/value/counter/lol",
+			expected:    want{code: 404},
+		},
+		{
+			description: "400 get unknown type",
+			method:      http.MethodGet,
+			requestURL:  "/value/wrongType/name",
+			expected:    want{code: 400},
+		},
+		{
+			description: "501 update unknown type",
+			method:      http.MethodPost,
+			requestURL:  "/update/unknown/testCounter/100",
+			expected:    want{code: 501},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.description, func(t *testing.T) {
-			resp, _ := executeRequest(t, server, tt.method, tt.requestURL)
-			defer func(Body io.ReadCloser) {
-				err := Body.Close()
-				if err != nil {
-					log.Println(err)
-				}
-			}(resp.Body)
-			assert.Equal(t, tt.expectedCode, resp.StatusCode)
+			resp, body := executeRequest(t, server, tt.method, tt.requestURL)
+			defer resp.Body.Close()
+			assert.Equal(t, tt.expected.code, resp.StatusCode)
+			for _, s := range tt.expected.body {
+				assert.Equal(t, body, s)
+			}
+			assert.Equal(t, tt.expected.code, resp.StatusCode)
 		})
 	}
 }

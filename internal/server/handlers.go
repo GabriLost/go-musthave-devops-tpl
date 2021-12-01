@@ -49,7 +49,7 @@ func PostMetricHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		metricCounters[name] += val
 	default:
-		http.Error(w, "No such type of metric", http.StatusBadRequest)
+		http.Error(w, "No such type of metric", http.StatusNotImplemented)
 		return
 	}
 	log.Printf("got metric %s", name)
