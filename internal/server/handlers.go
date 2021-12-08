@@ -17,8 +17,11 @@ func GetAllHandler(w http.ResponseWriter, _ *http.Request) {
 	//todo спросить почему так?
 	indexPage, err := os.ReadFile("internal/server/index.html")
 	if err != nil {
-		log.Println(err)
-		os.Exit(1)
+		indexPage, err = os.ReadFile("index.html")
+		if err != nil {
+			log.Println(err)
+			os.Exit(1)
+		}
 	}
 	indexTemplate := template.Must(template.New("").Parse(string(indexPage)))
 	tmp := make(map[string]interface{})
