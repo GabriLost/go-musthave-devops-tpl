@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 )
 
@@ -117,7 +118,7 @@ func TestMetricHandler(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.description, func(t *testing.T) {
-			resp, body := executeRequest(t, server, tt.method, tt.requestURL)
+			resp, body := executeRequest(t, server, tt.method, tt.requestURL, "")
 			defer resp.Body.Close()
 			assert.Equal(t, tt.expected.code, resp.StatusCode)
 			for _, s := range tt.expected.body {
@@ -197,8 +198,48 @@ func TestGetAllHandler(t *testing.T) {
 	}
 }
 
-func executeRequest(t *testing.T, ts *httptest.Server, method, query string) (*http.Response, string) {
-	req, err := http.NewRequest(method, ts.URL+query, nil)
+func TestMetricJsonPostHandler(t *testing.T) {
+	type want struct {
+		code int
+		body []string
+	}
+	r := Router()
+	server := httptest.NewServer(r)
+	defer server.Close()
+
+	tests := []struct {
+		description string
+		requestURL  string
+		method      string
+		body        string
+		expected    want
+	}{
+		{
+			description: "200 update json counter",
+			method:      http.MethodPost,
+			requestURL:  "/update/",
+			body:        `{"id":"poll","type":"counter","delta":5}`,
+			expected:    want{code: http.StatusOK},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.description, func(t *testing.T) {
+			resp, body := executeRequest(t, server, tt.method, tt.requestURL, tt.body)
+			defer resp.Body.Close()
+			assert.Equal(t, tt.expected.code, resp.StatusCode)
+			for _, s := range tt.expected.body {
+				assert.Equal(t, body, s)
+			}
+			assert.Equal(t, tt.expected.code, resp.StatusCode)
+		})
+	}
+}
+
+func executeRequest(t *testing.T, ts *httptest.Server, method string, query string, body string) (*http.Response, string) {
+	reader := strings.NewReader(body)
+	req, err := http.NewRequest(method, ts.URL+query, reader)
+	req.Header.Add("Content-Type", "application/json")
+
 	require.NoError(t, err)
 
 	resp, err := http.DefaultClient.Do(req)

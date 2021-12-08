@@ -14,7 +14,7 @@ const (
 )
 
 func main() {
-	go agent.Schedule(agent.StoreRuntimeMetrics, pollRuntimeMetricsInterval)
+	go agent.Schedule(agent.CollectRuntimeMetrics, pollRuntimeMetricsInterval)
 	go agent.Schedule(agent.SendMetrics, reportInterval)
 
 	cancelSignal := make(chan os.Signal, 1)

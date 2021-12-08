@@ -7,9 +7,9 @@ import (
 	"time"
 )
 
-func StoreRuntimeMetrics() {
+func CollectRuntimeMetrics() {
 	var rtm runtime.MemStats
-	log.Println("ticker StoreRuntimeMetrics")
+	log.Println("ticker CollectRuntimeMetrics")
 	runtime.ReadMemStats(&rtm)
 	PollCount += 1
 	Metrics = []Gauge{

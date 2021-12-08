@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strings"
 )
 
 type Gauge struct {
@@ -17,15 +18,17 @@ type Counter struct {
 }
 
 func (g Gauge) SendGauge(client *http.Client) (bool, error) {
-	url := fmt.Sprintf("%s%s:%s/update/%s/%s/%d",
+	url := fmt.Sprintf("%s%s:%s/update/",
 		DefaultProtocol,
 		DefaultServer,
-		DefaultPort,
-		"gauge",
-		g.name,
-		int(g.value))
+		DefaultPort)
 	log.Println("SendGauge " + url)
-	resp, err := client.Post(url, "text/plain", nil)
+	b := fmt.Sprintf(`{"id":"%s", "type":"%s", "value": %d}`,
+		g.name,
+		"gauge",
+		int(g.value))
+	body := strings.NewReader(b)
+	resp, err := client.Post(url, "application/json", body)
 	if err != nil {
 		log.Println(err)
 		return false, err
@@ -39,15 +42,18 @@ func (g Gauge) SendGauge(client *http.Client) (bool, error) {
 }
 
 func (c Counter) SendCounter(client *http.Client) (bool, error) {
-	url := fmt.Sprintf("%s%s:%s/update/%s/%s/%d",
+	url := fmt.Sprintf("%s%s:%s/update/",
 		DefaultProtocol,
 		DefaultServer,
-		DefaultPort,
-		"conter",
+		DefaultPort)
+	b := fmt.Sprintf(`{"id":"%s", "type":"%s", "delta": %d}`,
 		c.name,
-		int(c.value))
+		"counter",
+		c.value)
+	body := strings.NewReader(b)
+
 	log.Println("SendCounter " + url)
-	resp, err := client.Post(url, ContentType, nil)
+	resp, err := client.Post(url, "application/json", body)
 	if err != nil {
 		log.Println(err)
 		return false, err
