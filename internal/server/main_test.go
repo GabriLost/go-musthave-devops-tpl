@@ -215,11 +215,49 @@ func TestMetricJsonPostHandler(t *testing.T) {
 		expected    want
 	}{
 		{
-			description: "200 update json counter",
+			description: "200 update json counter delta",
 			method:      http.MethodPost,
 			requestURL:  "/update/",
 			body:        `{"id":"poll","type":"counter","delta":5}`,
 			expected:    want{code: http.StatusOK},
+		},
+		{
+			description: "200 update json counter delta again",
+			method:      http.MethodPost,
+			requestURL:  "/update/",
+			body:        `{"id":"poll","type":"counter","delta":5}`,
+			expected:    want{code: http.StatusOK},
+		},
+		{
+			description: "200 get counter delta",
+			method:      http.MethodPost,
+			requestURL:  "/value/",
+			body:        `{"id":"poll","type":"counter"}`,
+			expected: want{
+				code: http.StatusOK,
+				body: []string{
+					`{"id":"poll","type":"counter","delta":10}`,
+				},
+			},
+		},
+		{
+			description: "200 update json gauge value",
+			method:      http.MethodPost,
+			requestURL:  "/update/",
+			body:        `{"id":"alloc","type":"gauge","value":10000}`,
+			expected:    want{code: http.StatusOK},
+		},
+		{
+			description: "200 get gauge value",
+			method:      http.MethodPost,
+			requestURL:  "/value/",
+			body:        `{"id":"alloc","type":"gauge"}`,
+			expected: want{
+				code: http.StatusOK,
+				body: []string{
+					`{"id":"alloc","type":"gauge","value":10000}`,
+				},
+			},
 		},
 	}
 	for _, tt := range tests {
@@ -228,7 +266,7 @@ func TestMetricJsonPostHandler(t *testing.T) {
 			defer resp.Body.Close()
 			assert.Equal(t, tt.expected.code, resp.StatusCode)
 			for _, s := range tt.expected.body {
-				assert.Equal(t, body, s)
+				assert.Equal(t, s, body)
 			}
 			assert.Equal(t, tt.expected.code, resp.StatusCode)
 		})

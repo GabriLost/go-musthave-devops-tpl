@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/GabriLost/go-musthave-devops-tpl/internal/types"
 	"github.com/go-chi/chi/v5"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -106,7 +107,7 @@ func NotFoundHandler(w http.ResponseWriter, _ *http.Request) {
 	http.Error(w, "Not Found", http.StatusNotFound)
 }
 
-func PostJsonMetricsHandler(w http.ResponseWriter, r *http.Request) {
+func SetPostJsonMetricsHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Header.Get("Content-Type") != contentTypeAppJson {
 		w.WriteHeader(http.StatusBadRequest)
 		_, err := w.Write([]byte(`{"Status":"Bad Request"}`))
@@ -139,6 +140,78 @@ func PostJsonMetricsHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Add("Content-Type", contentTypeAppJson)
 	w.WriteHeader(http.StatusOK)
 
+}
+
+func GetPostJsonMetricsHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Header.Get("Content-Type") != "application/json" {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte(`{"Status":"Bad Request"}`))
+		return
+	}
+
+	body, err := ioutil.ReadAll(r.Body)
+	log.Println(body)
+	//read request
+	var m types.Metrics
+
+	err = json.Unmarshal(body, &m)
+	if err != nil {
+		log.Println(err)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte(`{"Status":"Bad Request"}`))
+		return
+	}
+
+	err = json.Unmarshal(body, &m)
+	if err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{"Status":"Internal Server Error"}`))
+		return
+	}
+	// if ID is null, then bad request
+	if m.ID == "" {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte(`{"Status":"Bad Request"}`))
+		return
+	}
+
+	switch m.MType {
+	case MetricTypeGauge:
+		val, ok := types.MetricGauges[m.ID]
+		if !ok {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusNotFound)
+			w.Write([]byte(`{"Status":"Not Found"}`))
+			return
+		}
+		m.Value = &val
+	case MetricTypeCounter:
+		val, ok := types.MetricCounters[m.ID]
+		if !ok {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusNotFound)
+			w.Write([]byte(`{"Status":"Not Found"}`))
+			return
+		}
+		m.Delta = &val
+	default:
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusNotFound)
+		w.Write([]byte(`{"Status":"Not Found"}`))
+		return
+	}
+	// encode
+	ret, err := json.Marshal(m)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{"Status":"Internal Server Error"}`))
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(ret)
 }
 
 func saveMetrics(m types.Metrics) error {
