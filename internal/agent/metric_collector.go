@@ -39,6 +39,7 @@ func CollectRuntimeMetrics() {
 		{name: "StackInuse", value: float64(rtm.StackInuse)},
 		{name: "StackSys", value: float64(rtm.StackSys)},
 		{name: "Sys", value: float64(rtm.Sys)},
+		{name: "TotalAlloc", value: float64(rtm.TotalAlloc)},
 	}
 }
 

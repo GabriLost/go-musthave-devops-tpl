@@ -259,6 +259,13 @@ func TestMetricJsonPostHandler(t *testing.T) {
 				},
 			},
 		},
+		{
+			description: "501 update json unknown type",
+			method:      http.MethodPost,
+			requestURL:  "/update/",
+			body:        `{"id":"other","type":"other","value":1}`,
+			expected:    want{code: http.StatusNotImplemented},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.description, func(t *testing.T) {
