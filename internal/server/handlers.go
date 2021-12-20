@@ -107,7 +107,7 @@ func NotFoundHandler(w http.ResponseWriter, _ *http.Request) {
 	http.Error(w, "Not Found", http.StatusNotFound)
 }
 
-func SetPostJsonMetricsHandler(w http.ResponseWriter, r *http.Request) {
+func SetPostJSONMetricsHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Header.Get("Content-Type") != contentTypeAppJson {
 		w.WriteHeader(http.StatusBadRequest)
 		_, err := w.Write([]byte(`{"Status":"Bad Request"}`))
@@ -142,7 +142,7 @@ func SetPostJsonMetricsHandler(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func GetPostJsonMetricsHandler(w http.ResponseWriter, r *http.Request) {
+func GetPostJSONMetricsHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Header.Get("Content-Type") != "application/json" {
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte(`{"Status":"Bad Request"}`))

@@ -42,7 +42,7 @@ func Test_SendCounter_And_SendGauge(t *testing.T) {
 				value: test.fields.value,
 			}
 
-			l, err := net.Listen(TCP, DefaultServer+":"+DefaultPort)
+			l, err := net.Listen(TCP, DefaultAddress)
 			if err != nil {
 				log.Fatal(err)
 			}

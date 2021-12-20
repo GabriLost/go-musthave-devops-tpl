@@ -9,7 +9,7 @@ func Router() chi.Router {
 	router.Post("/update/{typ}/{name}/{value}", PostMetricHandler)
 	router.Post("/update/{typ}/", NotFoundHandler)
 	router.Post("/update/*", NotImplementedHandler)
-	router.Post("/update/", SetPostJsonMetricsHandler)
-	router.Post("/value/", GetPostJsonMetricsHandler)
+	router.Post("/update/", SetPostJSONMetricsHandler)
+	router.Post("/value/", GetPostJSONMetricsHandler)
 	return router
 }
