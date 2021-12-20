@@ -149,9 +149,8 @@ func GetPostJsonMetricsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	body, err := ioutil.ReadAll(r.Body)
-	log.Println(body)
 	//read request
+	body, err := ioutil.ReadAll(r.Body)
 	var m types.Metrics
 
 	err = json.Unmarshal(body, &m)
