@@ -13,34 +13,53 @@ import (
 )
 
 var (
-	pollInterval, reportInterval int
-	address                      string
+	pollInterval, reportIntervalFlag time.Duration
+	addressFlag                      string
 )
 
-func main() {
-	var cfg types.AgentConfig
-	err := env.Parse(&cfg)
+const (
+	defaultAddress        = "localhost:8080"
+	defaultPollInterval   = 2 * time.Second
+	defaultReportInterval = 10 * time.Second
+)
+
+func getConfig() types.AgentConfig {
+	var c types.AgentConfig
+	err := env.Parse(&c)
 	if err != nil {
 		log.Println("Can't read env config")
 		log.Println(err)
 	}
 
-	//rewrite if flags is not empty
-	flag.StringVar(&address, "a", "", "server address")
-	flag.IntVar(&reportInterval, "r", 0, "report interval")
-	flag.IntVar(&pollInterval, "p", 0, "poll interval")
+	flag.StringVar(&addressFlag, "a", defaultAddress, "server address")
+	flag.DurationVar(&reportIntervalFlag, "r", defaultReportInterval, "report interval")
+	flag.DurationVar(&pollInterval, "p", defaultPollInterval, "poll interval")
 	flag.Parse()
-	if address != "" {
-		types.SenderConfig.Address = address
-	}
-	if pollInterval != 0 {
-		types.SenderConfig.PollInterval = time.Second * time.Duration(pollInterval)
-	}
-	if reportInterval != 0 {
-		types.SenderConfig.ReportInterval = time.Second * time.Duration(reportInterval)
+
+	//rewrite if ENV values is not empty
+	_, isSet := os.LookupEnv("ADDRESS")
+	if !isSet {
+		c.Address = addressFlag
 	}
 
+	_, isSet = os.LookupEnv("REPORT_INTERVAL")
+	if !isSet {
+		c.ReportInterval = reportIntervalFlag
+	}
+
+	_, isSet = os.LookupEnv("POLL_INTERVAL")
+	if !isSet {
+		c.PollInterval = pollInterval
+	}
+
+	return c
+}
+
+func main() {
 	//start processes
+	types.SenderConfig = getConfig()
+	types.SenderConfig.LogConfig()
+
 	go agent.Schedule(agent.CollectRuntimeMetrics, types.SenderConfig.PollInterval)
 	go agent.Schedule(agent.SendMetrics, types.SenderConfig.ReportInterval)
 

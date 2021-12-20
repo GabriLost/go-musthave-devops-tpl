@@ -2,6 +2,7 @@ package agent
 
 import (
 	"fmt"
+	"github.com/GabriLost/go-musthave-devops-tpl/internal/types"
 	"log"
 	"net/http"
 	"strings"
@@ -18,10 +19,9 @@ type Counter struct {
 }
 
 func (g Gauge) SendGauge(client *http.Client) (bool, error) {
-	url := fmt.Sprintf("%s%s:%s/update/",
+	url := fmt.Sprintf("%s%s/update/",
 		DefaultProtocol,
-		DefaultServer,
-		DefaultPort)
+		types.SenderConfig.Address)
 	log.Println("SendGauge " + url)
 	b := fmt.Sprintf(`{"id":"%s", "type":"%s", "value": %d}`,
 		g.name,
@@ -42,10 +42,9 @@ func (g Gauge) SendGauge(client *http.Client) (bool, error) {
 }
 
 func (c Counter) SendCounter(client *http.Client) (bool, error) {
-	url := fmt.Sprintf("%s%s:%s/update/",
+	url := fmt.Sprintf("%s%s/update/",
 		DefaultProtocol,
-		DefaultServer,
-		DefaultPort)
+		types.SenderConfig.Address)
 	b := fmt.Sprintf(`{"id":"%s", "type":"%s", "delta": %d}`,
 		c.name,
 		"counter",

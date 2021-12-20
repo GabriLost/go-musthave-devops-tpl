@@ -26,8 +26,8 @@ func GetAllHandler(w http.ResponseWriter, _ *http.Request) {
 	}
 	indexTemplate := template.Must(template.New("").Parse(string(indexPage)))
 	tmp := make(map[string]interface{})
-	tmp[MetricTypeGauge] = types.MetricGauges
-	tmp[MetricTypeCounter] = types.MetricCounters
+	tmp[MetricTypeGauge] = MetricGauges
+	tmp[MetricTypeCounter] = MetricCounters
 	err = indexTemplate.Execute(w, tmp)
 	if err != nil {
 		log.Println(err)
@@ -48,14 +48,14 @@ func PostMetricHandler(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Wrong gauge value", http.StatusBadRequest)
 			return
 		}
-		types.MetricGauges[name] = val
+		MetricGauges[name] = val
 	case MetricTypeCounter:
 		val, err := strconv.ParseInt(value, 10, 64)
 		if err != nil {
 			http.Error(w, "Wrong counter value", http.StatusBadRequest)
 			return
 		}
-		types.MetricCounters[name] += val
+		MetricCounters[name] += val
 	default:
 		http.Error(w, "No such type of metric", http.StatusNotImplemented)
 		return
@@ -71,7 +71,7 @@ func GetMetricHandler(w http.ResponseWriter, r *http.Request) {
 	metricName := chi.URLParam(r, "name")
 	switch metricType {
 	case MetricTypeGauge:
-		if val, found := types.MetricGauges[metricName]; found {
+		if val, found := MetricGauges[metricName]; found {
 			w.WriteHeader(http.StatusOK)
 			w.Header().Add("Content-Type", contentTypeAppJson)
 			_, err := w.Write([]byte(fmt.Sprint(val)))
@@ -83,7 +83,7 @@ func GetMetricHandler(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "There is no metric you requested", http.StatusNotFound)
 		}
 	case MetricTypeCounter:
-		if val, found := types.MetricCounters[metricName]; found {
+		if val, found := MetricCounters[metricName]; found {
 			w.WriteHeader(http.StatusOK)
 			w.Header().Add("Content-Type", contentTypeAppJson)
 			_, err := w.Write([]byte(fmt.Sprint(val)))
@@ -179,7 +179,7 @@ func GetPostJsonMetricsHandler(w http.ResponseWriter, r *http.Request) {
 
 	switch m.MType {
 	case MetricTypeGauge:
-		val, ok := types.MetricGauges[m.ID]
+		val, ok := MetricGauges[m.ID]
 		if !ok {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusNotFound)
@@ -188,7 +188,7 @@ func GetPostJsonMetricsHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		m.Value = &val
 	case MetricTypeCounter:
-		val, ok := types.MetricCounters[m.ID]
+		val, ok := MetricCounters[m.ID]
 		if !ok {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusNotFound)
@@ -218,9 +218,9 @@ func saveMetrics(m types.Metrics) error {
 	log.Printf("%s %s %d %d\n", m.ID, m.MType, m.Delta, m.Value)
 	switch m.MType {
 	case MetricTypeGauge:
-		types.MetricGauges[m.ID] = *m.Value
+		MetricGauges[m.ID] = *m.Value
 	case MetricTypeCounter:
-		types.MetricCounters[m.ID] += *m.Delta
+		MetricCounters[m.ID] += *m.Delta
 	default:
 		return errors.New("No such type of metric ")
 	}

@@ -1,6 +1,7 @@
 package types
 
 import (
+	"log"
 	"time"
 )
 
@@ -11,32 +12,36 @@ type Metrics struct {
 	Value *float64 `json:"value,omitempty"` // значение метрики в случае передачи gauge
 }
 
-var (
-	MetricCounters = make(map[string]int64)
-	MetricGauges   = make(map[string]float64)
-)
+type InternalStorage struct {
+	CounterMetrics map[string]int64
+	GaugeMetrics   map[string]float64
+}
 
 type (
 	AgentConfig struct {
-		Address        string        `env:"ADDRESS" envDefault:"localhost1"`
-		PollInterval   time.Duration `env:"POLL_INTERVAL" envDefault:"1s"`
-		ReportInterval time.Duration `env:"REPORT_INTERVAL" envDefault:"5s"`
+		Address        string        `env:"ADDRESS"`
+		PollInterval   time.Duration `env:"POLL_INTERVAL"`
+		ReportInterval time.Duration `env:"REPORT_INTERVAL"`
 	}
 	ServerConfig struct {
-		ServerAddress   string        `env:"SERVER_ADDRESS" envDefault:"localhost"`
-		FileStoragePath string        `env:"STORE_FILE" envDefault:"/tmp/devops-metrics-db.json"`
-		StoreInterval   time.Duration `env:"STORE_INTERVAL" envDefault:"300"`
-		Restore         bool          `env:"RESTORE" envDefault:"true"`
+		ServerAddress   string        `env:"SERVER_ADDRESS"`
+		FileStoragePath string        `env:"STORE_FILE"`
+		StoreInterval   time.Duration `env:"STORE_INTERVAL"`
+		Restore         bool          `env:"RESTORE"`
 	}
 )
 
 var (
-	// SenderConfig config for sender service
-	SenderConfig = AgentConfig{
-		Address:        "localhost2",
-		PollInterval:   5,
-		ReportInterval: 15,
-	}
-
-	SConfig = ServerConfig{}
+	SenderConfig = AgentConfig{}
+	SConfig      = ServerConfig{}
 )
+
+func (c AgentConfig) LogConfig() {
+	log.Printf(`agent address="%s", poll interval="%s" report interval="%s"`,
+		c.Address, c.PollInterval, c.ReportInterval)
+}
+
+func (c ServerConfig) LogConfig() {
+	log.Printf(`server address="%s", file path="%s", store interval="%s", is restore="%t"`,
+		c.ServerAddress, c.FileStoragePath, c.StoreInterval, c.Restore)
+}
