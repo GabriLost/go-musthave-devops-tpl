@@ -32,8 +32,12 @@ type (
 )
 
 var (
-	SenderConfig = AgentConfig{}
-	SConfig      = ServerConfig{}
+	SenderConfig = AgentConfig{
+		Address:        "localhost:8080",
+		PollInterval:   2,
+		ReportInterval: 5,
+	}
+	SConfig = ServerConfig{}
 )
 
 func (c AgentConfig) LogConfig() {
