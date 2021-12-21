@@ -26,12 +26,11 @@ const (
 	defaultRestore       = true
 )
 
-func getConfig() types.ServerConfig {
+func getConfig() (types.ServerConfig, error) {
 	var c types.ServerConfig
 	err := env.Parse(&c)
 	if err != nil {
-		log.Println("Can't read env config")
-		log.Println(err)
+		return c, err
 	}
 
 	flag.StringVar(&addressFlag, "a", defaultAddress, "Server Address")
@@ -60,7 +59,7 @@ func getConfig() types.ServerConfig {
 		c.Restore = restoreFlag
 	}
 
-	return c
+	return c, nil
 }
 
 func StartServer(c types.ServerConfig) {
@@ -85,7 +84,11 @@ func StartServer(c types.ServerConfig) {
 
 func main() {
 
-	types.SConfig = getConfig()
+	cfg, err := getConfig()
+	if err != nil {
+		log.Fatal()
+	}
+	types.SConfig = cfg
 	types.SConfig.LogConfig()
 
 	go StartServer(types.SConfig)

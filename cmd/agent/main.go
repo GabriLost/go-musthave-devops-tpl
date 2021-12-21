@@ -23,12 +23,11 @@ const (
 	defaultReportInterval = 10 * time.Second
 )
 
-func getConfig() types.AgentConfig {
+func getConfig() (types.AgentConfig, error) {
 	var c types.AgentConfig
 	err := env.Parse(&c)
 	if err != nil {
-		log.Println("Can't read env config")
-		log.Println(err)
+		return c, err
 	}
 
 	flag.StringVar(&addressFlag, "a", defaultAddress, "server address")
@@ -52,12 +51,16 @@ func getConfig() types.AgentConfig {
 		c.PollInterval = pollInterval
 	}
 
-	return c
+	return c, nil
 }
 
 func main() {
-	//start processes
-	types.SenderConfig = getConfig()
+
+	cfg, err := getConfig()
+	if err != nil {
+		log.Fatal()
+	}
+	types.SenderConfig = cfg
 	types.SenderConfig.LogConfig()
 
 	go agent.Schedule(agent.CollectRuntimeMetrics, types.SenderConfig.PollInterval)

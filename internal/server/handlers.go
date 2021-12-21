@@ -21,7 +21,7 @@ func GetAllHandler(w http.ResponseWriter, _ *http.Request) {
 		indexPage, err = os.ReadFile("index.html")
 		if err != nil {
 			log.Println(err)
-			os.Exit(1)
+			return
 		}
 	}
 	indexTemplate := template.Must(template.New("").Parse(string(indexPage)))
@@ -35,7 +35,7 @@ func GetAllHandler(w http.ResponseWriter, _ *http.Request) {
 	}
 }
 
-func PostMetricHandler(w http.ResponseWriter, r *http.Request) {
+func UpdateMetricHandler(w http.ResponseWriter, r *http.Request) {
 
 	metric := chi.URLParam(r, "typ")
 	name := chi.URLParam(r, "name")
@@ -66,7 +66,7 @@ func PostMetricHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
-func GetMetricHandler(w http.ResponseWriter, r *http.Request) {
+func ValueMetricHandler(w http.ResponseWriter, r *http.Request) {
 	metricType := chi.URLParam(r, "typ")
 	metricName := chi.URLParam(r, "name")
 	switch metricType {
@@ -107,7 +107,12 @@ func NotFoundHandler(w http.ResponseWriter, _ *http.Request) {
 	http.Error(w, "Not Found", http.StatusNotFound)
 }
 
-func SetPostJSONMetricsHandler(w http.ResponseWriter, r *http.Request) {
+func BadRequestHandler(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusBadRequest)
+	w.Write([]byte("Bad Request"))
+}
+
+func JSONUpdateMetricsHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Header.Get("Content-Type") != contentTypeAppJSON {
 		w.WriteHeader(http.StatusBadRequest)
 		_, err := w.Write([]byte(`{"Status":"Bad Request"}`))
@@ -142,38 +147,30 @@ func SetPostJSONMetricsHandler(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func GetPostJSONMetricsHandler(w http.ResponseWriter, r *http.Request) {
+func JSONValueHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Header.Get("Content-Type") != "application/json" {
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte(`{"Status":"Bad Request"}`))
+		ResponseErrorJSON(w, http.StatusBadRequest)
 		return
 	}
 
-	//read request
 	body, _ := ioutil.ReadAll(r.Body)
 	var m types.Metrics
 
 	err := json.Unmarshal(body, &m)
 	if err != nil {
 		log.Println(err)
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte(`{"Status":"Bad Request"}`))
+		ResponseErrorJSON(w, http.StatusBadRequest)
 		return
 	}
 
 	err = json.Unmarshal(body, &m)
 	if err != nil {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(`{"Status":"Internal Server Error"}`))
+		ResponseErrorJSON(w, http.StatusInternalServerError)
 		return
 	}
 	// if ID is null, then bad request
 	if m.ID == "" {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte(`{"Status":"Bad Request"}`))
+		ResponseErrorJSON(w, http.StatusBadRequest)
 		return
 	}
 
@@ -181,36 +178,42 @@ func GetPostJSONMetricsHandler(w http.ResponseWriter, r *http.Request) {
 	case MetricTypeGauge:
 		val, ok := MetricGauges[m.ID]
 		if !ok {
-			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(http.StatusNotFound)
-			w.Write([]byte(`{"Status":"Not Found"}`))
+			ResponseErrorJSON(w, http.StatusNotFound)
 			return
 		}
 		m.Value = &val
 	case MetricTypeCounter:
 		val, ok := MetricCounters[m.ID]
 		if !ok {
-			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(http.StatusNotFound)
-			w.Write([]byte(`{"Status":"Not Found"}`))
+			ResponseErrorJSON(w, http.StatusNotFound)
 			return
 		}
 		m.Delta = &val
 	default:
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusNotFound)
-		w.Write([]byte(`{"Status":"Not Found"}`))
+		ResponseErrorJSON(w, http.StatusNotFound)
 		return
 	}
 	// encode
 	ret, err := json.Marshal(m)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(`{"Status":"Internal Server Error"}`))
+		ResponseErrorJSON(w, http.StatusInternalServerError)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(ret)
+}
+
+func ResponseErrorJSON(w http.ResponseWriter, statusCode int) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(statusCode)
+	statusStr := http.StatusText(statusCode)
+	if statusStr == "" {
+		statusStr = "UNKNOWN"
+	}
+	_, err := w.Write([]byte(`{"Status":"` + statusStr + `"}`))
+	if err != nil {
+		return
+	}
 }
 
 func saveMetrics(m types.Metrics) error {
