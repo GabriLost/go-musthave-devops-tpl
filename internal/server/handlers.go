@@ -62,7 +62,7 @@ func PostMetricHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	log.Printf("got metric %s", name)
 
-	w.Header().Add("Content-Type", contentTypeAppJson)
+	w.Header().Add("Content-Type", contentTypeAppJSON)
 	w.WriteHeader(http.StatusOK)
 }
 
@@ -73,7 +73,7 @@ func GetMetricHandler(w http.ResponseWriter, r *http.Request) {
 	case MetricTypeGauge:
 		if val, found := MetricGauges[metricName]; found {
 			w.WriteHeader(http.StatusOK)
-			w.Header().Add("Content-Type", contentTypeAppJson)
+			w.Header().Add("Content-Type", contentTypeAppJSON)
 			_, err := w.Write([]byte(fmt.Sprint(val)))
 			if err != nil {
 				log.Println(err)
@@ -85,7 +85,7 @@ func GetMetricHandler(w http.ResponseWriter, r *http.Request) {
 	case MetricTypeCounter:
 		if val, found := MetricCounters[metricName]; found {
 			w.WriteHeader(http.StatusOK)
-			w.Header().Add("Content-Type", contentTypeAppJson)
+			w.Header().Add("Content-Type", contentTypeAppJSON)
 			_, err := w.Write([]byte(fmt.Sprint(val)))
 			if err != nil {
 				log.Println(err)
@@ -108,7 +108,7 @@ func NotFoundHandler(w http.ResponseWriter, _ *http.Request) {
 }
 
 func SetPostJSONMetricsHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Header.Get("Content-Type") != contentTypeAppJson {
+	if r.Header.Get("Content-Type") != contentTypeAppJSON {
 		w.WriteHeader(http.StatusBadRequest)
 		_, err := w.Write([]byte(`{"Status":"Bad Request"}`))
 		if err != nil {
@@ -132,12 +132,12 @@ func SetPostJSONMetricsHandler(w http.ResponseWriter, r *http.Request) {
 	//todo validate
 	err := saveMetrics(m)
 	if err != nil {
-		w.Header().Set("Content-Type", contentTypeAppJson)
+		w.Header().Set("Content-Type", contentTypeAppJSON)
 		log.Println(err)
 		http.Error(w, "No such type of metric", http.StatusNotImplemented)
 		return
 	}
-	w.Header().Add("Content-Type", contentTypeAppJson)
+	w.Header().Add("Content-Type", contentTypeAppJSON)
 	w.WriteHeader(http.StatusOK)
 
 }
