@@ -224,7 +224,7 @@ func TestMetricJsonPostHandler(t *testing.T) {
 		{
 			description: "200 update json counter delta again",
 			method:      http.MethodPost,
-			requestURL:  "/update/",
+			requestURL:  "/update",
 			body:        `{"id":"poll","type":"counter","delta":5}`,
 			expected:    want{code: http.StatusOK},
 		},
