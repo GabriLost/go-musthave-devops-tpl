@@ -215,7 +215,7 @@ func GetPostJSONMetricsHandler(w http.ResponseWriter, r *http.Request) {
 
 func saveMetrics(m types.Metrics) error {
 	//todo mutex
-	log.Printf("%s %s %d %d\n", m.ID, m.MType, m.Delta, m.Value)
+	log.Printf("saving metric %s %s %d %d\n", m.ID, m.MType, m.Delta, m.Value)
 	switch m.MType {
 	case MetricTypeGauge:
 		MetricGauges[m.ID] = *m.Value

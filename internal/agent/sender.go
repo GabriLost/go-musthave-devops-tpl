@@ -22,11 +22,11 @@ func (g Gauge) SendGauge(client *http.Client) (bool, error) {
 	url := fmt.Sprintf("%s%s/update/",
 		DefaultProtocol,
 		types.SenderConfig.Address)
-	log.Println("SendGauge " + url)
 	b := fmt.Sprintf(`{"id":"%s", "type":"%s", "value": %d}`,
 		g.name,
 		"gauge",
 		int(g.value))
+	log.Printf("SendGauge %s %s", b, url)
 	body := strings.NewReader(b)
 	resp, err := client.Post(url, "application/json", body)
 	if err != nil {
@@ -49,9 +49,8 @@ func (c Counter) SendCounter(client *http.Client) (bool, error) {
 		c.name,
 		"counter",
 		c.value)
+	log.Printf("SendCounter %s %s", b, url)
 	body := strings.NewReader(b)
-
-	log.Println("SendCounter " + url)
 	resp, err := client.Post(url, "application/json", body)
 	if err != nil {
 		log.Println(err)
