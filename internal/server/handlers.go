@@ -163,9 +163,10 @@ func JSONValueHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	body, err := ioutil.ReadAll(r.Body)
+	w.Header().Set("Content-Type", "application/json")
+
 	if err != nil {
-		log.Println(err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		ResponseErrorJSON(w, http.StatusInternalServerError)
 		return
 	}
 
@@ -173,16 +174,10 @@ func JSONValueHandler(w http.ResponseWriter, r *http.Request) {
 
 	err = json.Unmarshal(body, &m)
 	if err != nil {
-		log.Println(err)
 		ResponseErrorJSON(w, http.StatusBadRequest)
 		return
 	}
 
-	err = json.Unmarshal(body, &m)
-	if err != nil {
-		ResponseErrorJSON(w, http.StatusInternalServerError)
-		return
-	}
 	// if ID(metricName) is null, then bad request
 	if m.ID == "" {
 		ResponseErrorJSON(w, http.StatusBadRequest)
@@ -208,13 +203,10 @@ func JSONValueHandler(w http.ResponseWriter, r *http.Request) {
 		ResponseErrorJSON(w, http.StatusNotFound)
 		return
 	}
-
-	err = json.NewEncoder(w).Encode(m)
-	if err != nil {
+	if err := json.NewEncoder(w).Encode(m); err != nil {
 		ResponseErrorJSON(w, http.StatusInternalServerError)
 		return
 	}
-	w.Header().Set("Content-Type", "application/json")
 
 }
 

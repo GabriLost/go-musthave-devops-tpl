@@ -224,7 +224,7 @@ func TestMetricJsonPostHandler(t *testing.T) {
 		{
 			description: "200 update json counter delta again",
 			method:      http.MethodPost,
-			requestURL:  "/update",
+			requestURL:  "/update/",
 			body:        `{"id":"poll","type":"counter","delta":5}`,
 			expected:    want{code: http.StatusOK},
 		},
@@ -273,7 +273,7 @@ func TestMetricJsonPostHandler(t *testing.T) {
 			defer resp.Body.Close()
 			assert.Equal(t, tt.expected.code, resp.StatusCode)
 			for _, s := range tt.expected.body {
-				assert.Equal(t, s, body)
+				assert.Contains(t, body, s)
 			}
 			assert.Equal(t, tt.expected.code, resp.StatusCode)
 		})
