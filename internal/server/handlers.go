@@ -208,17 +208,18 @@ func JSONValueHandler(w http.ResponseWriter, r *http.Request) {
 		ResponseErrorJSON(w, http.StatusNotFound)
 		return
 	}
-	// encode
-	w.Header().Set("Content-Type", "application/json")
+
 	err = json.NewEncoder(w).Encode(m)
 	if err != nil {
 		ResponseErrorJSON(w, http.StatusInternalServerError)
 		return
 	}
-	w.WriteHeader(http.StatusOK)
+	w.Header().Set("Content-Type", "application/json")
+
 }
 
 func ResponseErrorJSON(w http.ResponseWriter, statusCode int) {
+	log.Printf("ResponseErrorJSON with status code %d", statusCode)
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(statusCode)
 	statusStr := http.StatusText(statusCode)
