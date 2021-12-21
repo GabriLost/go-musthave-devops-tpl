@@ -150,10 +150,10 @@ func GetPostJSONMetricsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	//read request
-	body, err := ioutil.ReadAll(r.Body)
+	body, _ := ioutil.ReadAll(r.Body)
 	var m types.Metrics
 
-	err = json.Unmarshal(body, &m)
+	err := json.Unmarshal(body, &m)
 	if err != nil {
 		log.Println(err)
 		w.Header().Set("Content-Type", "application/json")
