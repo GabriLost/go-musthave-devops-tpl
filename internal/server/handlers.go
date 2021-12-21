@@ -14,25 +14,30 @@ import (
 	"text/template"
 )
 
-func GetAllHandler(w http.ResponseWriter, _ *http.Request) {
-	//todo спросить почему так?
-	indexPage, err := os.ReadFile("internal/server/index.html")
-	if err != nil {
-		indexPage, err = os.ReadFile("index.html")
-		if err != nil {
-			log.Println(err)
-			return
-		}
-	}
-	indexTemplate := template.Must(template.New("").Parse(string(indexPage)))
-	tmp := make(map[string]interface{})
-	tmp[MetricTypeGauge] = MetricGauges
-	tmp[MetricTypeCounter] = MetricCounters
-	err = indexTemplate.Execute(w, tmp)
+var HTMLTemplate *template.Template
+
+func IndexPageHandler(w http.ResponseWriter, _ *http.Request) {
+	data := make(map[string]interface{})
+	data[MetricTypeGauge] = MetricGauges
+	data[MetricTypeCounter] = MetricCounters
+	err := HTMLTemplate.Execute(w, data)
 	if err != nil {
 		log.Println(err)
 		return
 	}
+}
+
+func LoadIndexHTML() error {
+	page := "internal/server/" + HTMLFile
+	bytes, err := os.ReadFile(page)
+	if err != nil {
+		return err
+	}
+	HTMLTemplate, err = template.New("").Parse(string(bytes))
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func UpdateMetricHandler(w http.ResponseWriter, r *http.Request) {

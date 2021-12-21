@@ -64,6 +64,11 @@ func getConfig() (types.ServerConfig, error) {
 
 func StartServer(c types.ServerConfig) {
 
+	err := server.LoadIndexHTML()
+	if err != nil {
+		log.Println("index page not loaded")
+	}
+
 	if c.Restore && c.FileStoragePath != "" {
 		server.LoadMetrics(c)
 	}
