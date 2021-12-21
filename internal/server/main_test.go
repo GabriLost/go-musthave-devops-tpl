@@ -178,7 +178,7 @@ func TestGetAllHandler(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			recorder := httptest.NewRecorder()
 			request := httptest.NewRequest(http.MethodGet, test.url, nil)
-			handlerFunc := http.HandlerFunc(IndexPageHandler)
+			handlerFunc := http.HandlerFunc(AllMetricsHandler)
 			handlerFunc.ServeHTTP(recorder, request)
 			result := recorder.Result()
 

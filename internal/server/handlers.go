@@ -16,7 +16,7 @@ import (
 
 var HTMLTemplate *template.Template
 
-func IndexPageHandler(w http.ResponseWriter, _ *http.Request) {
+func AllMetricsHandler(w http.ResponseWriter, _ *http.Request) {
 	data := make(map[string]interface{})
 	data[MetricTypeGauge] = MetricGauges
 	data[MetricTypeCounter] = MetricCounters
@@ -28,11 +28,15 @@ func IndexPageHandler(w http.ResponseWriter, _ *http.Request) {
 }
 
 func LoadIndexHTML() error {
-	page := "internal/server/" + HTMLFile
-	bytes, err := os.ReadFile(page)
+	// todo спросить почему так
+	bytes, err := os.ReadFile("internal/server/" + HTMLFile)
 	if err != nil {
-		return err
+		bytes, err = os.ReadFile(HTMLFile)
+		if err != nil {
+			return err
+		}
 	}
+
 	HTMLTemplate, err = template.New("").Parse(string(bytes))
 	if err != nil {
 		return err
@@ -158,10 +162,16 @@ func JSONValueHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	body, _ := ioutil.ReadAll(r.Body)
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		log.Println(err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
 	var m types.Metrics
 
-	err := json.Unmarshal(body, &m)
+	err = json.Unmarshal(body, &m)
 	if err != nil {
 		log.Println(err)
 		ResponseErrorJSON(w, http.StatusBadRequest)
@@ -173,7 +183,7 @@ func JSONValueHandler(w http.ResponseWriter, r *http.Request) {
 		ResponseErrorJSON(w, http.StatusInternalServerError)
 		return
 	}
-	// if ID is null, then bad request
+	// if ID(metricName) is null, then bad request
 	if m.ID == "" {
 		ResponseErrorJSON(w, http.StatusBadRequest)
 		return
@@ -199,13 +209,13 @@ func JSONValueHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// encode
-	ret, err := json.Marshal(m)
+	w.Header().Set("Content-Type", "application/json")
+	err = json.NewEncoder(w).Encode(m)
 	if err != nil {
 		ResponseErrorJSON(w, http.StatusInternalServerError)
 		return
 	}
-	w.Header().Set("Content-Type", "application/json")
-	w.Write(ret)
+	w.WriteHeader(http.StatusOK)
 }
 
 func ResponseErrorJSON(w http.ResponseWriter, statusCode int) {
