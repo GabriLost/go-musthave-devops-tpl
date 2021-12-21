@@ -222,7 +222,7 @@ func saveMetrics(m types.Metrics) error {
 	case MetricTypeCounter:
 		MetricCounters[m.ID] += *m.Delta
 	default:
-		return errors.New("No such type of metric ")
+		return errors.New("no such type of metric")
 	}
 	return nil
 
