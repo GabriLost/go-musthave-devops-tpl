@@ -24,7 +24,7 @@ type (
 		ReportInterval time.Duration `env:"REPORT_INTERVAL"`
 	}
 	ServerConfig struct {
-		ServerAddress   string        `env:"SERVER_ADDRESS"`
+		ServerAddress   string        `env:"ADDRESS"`
 		FileStoragePath string        `env:"STORE_FILE"`
 		StoreInterval   time.Duration `env:"STORE_INTERVAL"`
 		Restore         bool          `env:"RESTORE"`

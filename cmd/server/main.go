@@ -82,7 +82,7 @@ func StartServer(c types.ServerConfig) {
 		Handler: server.Router(),
 	}
 	svr.SetKeepAlivesEnabled(false)
-	log.Printf("listening on port %s ", addressFlag)
+	log.Printf("listening on port %s ", c.ServerAddress)
 	log.Fatal(svr.ListenAndServe())
 
 }

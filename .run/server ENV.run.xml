@@ -2,11 +2,11 @@
   <configuration default="false" name="server ENV" type="GoApplicationRunConfiguration" factoryName="Go Application">
     <module name="go-musthave-devops-tpl" />
     <working_directory value="$PROJECT_DIR$" />
-    <parameters value="-a=localhost:8080 -r=true -i=31s -f=programArgs.json" />
     <envs>
       <env name="STORE_FILE" value="envArgs.log" />
       <env name="RESTORE" value="true" />
       <env name="STORE_INTERVAL" value="32s" />
+      <env name="ADDRESS" value="localhost:8081" />
     </envs>
     <kind value="PACKAGE" />
     <package value="github.com/GabriLost/go-musthave-devops-tpl/cmd/server" />
