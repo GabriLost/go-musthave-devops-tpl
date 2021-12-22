@@ -217,7 +217,12 @@ func ResponseErrorJSON(w http.ResponseWriter, statusCode int, message string) {
 	if statusStr == "" {
 		statusStr = "UNKNOWN"
 	}
-	_, err := w.Write([]byte(`{"Status":"` + statusStr + `"}`))
+	type Response struct {
+		Status string `json:"Status"`
+	}
+
+	r := Response{Status: statusStr}
+	err := json.NewEncoder(w).Encode(&r)
 	if err != nil {
 		return
 	}
