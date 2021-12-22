@@ -176,6 +176,7 @@ func TestGetAllHandler(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
+			LoadIndexHTML()
 			recorder := httptest.NewRecorder()
 			request := httptest.NewRequest(http.MethodGet, test.url, nil)
 			handlerFunc := http.HandlerFunc(AllMetricsHandler)
