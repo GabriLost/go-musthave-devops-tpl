@@ -158,7 +158,7 @@ func JSONUpdateMetricsHandler(w http.ResponseWriter, r *http.Request) {
 
 func JSONValueHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Header.Get("Content-Type") != "application/json" {
-		ResponseErrorJSON(w, http.StatusBadRequest)
+		ResponseErrorJSON(w, http.StatusBadRequest, "Header type is not \"application/json\"")
 		return
 	}
 
@@ -166,7 +166,7 @@ func JSONValueHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	if err != nil {
-		ResponseErrorJSON(w, http.StatusInternalServerError)
+		ResponseErrorJSON(w, http.StatusInternalServerError, "can't read body")
 		return
 	}
 
@@ -174,13 +174,12 @@ func JSONValueHandler(w http.ResponseWriter, r *http.Request) {
 
 	err = json.Unmarshal(body, &m)
 	if err != nil {
-		ResponseErrorJSON(w, http.StatusBadRequest)
+		ResponseErrorJSON(w, http.StatusBadRequest, "can't Unmarshal body")
 		return
 	}
 
-	// if ID(metricName) is null, then bad request
 	if m.ID == "" {
-		ResponseErrorJSON(w, http.StatusBadRequest)
+		ResponseErrorJSON(w, http.StatusBadRequest, "ID(metricName) is null")
 		return
 	}
 
@@ -188,30 +187,30 @@ func JSONValueHandler(w http.ResponseWriter, r *http.Request) {
 	case MetricTypeGauge:
 		val, ok := MetricGauges[m.ID]
 		if !ok {
-			ResponseErrorJSON(w, http.StatusNotFound)
+			ResponseErrorJSON(w, http.StatusNotFound, "MetricTypeGauge "+m.ID)
 			return
 		}
 		m.Value = &val
 	case MetricTypeCounter:
 		val, ok := MetricCounters[m.ID]
 		if !ok {
-			ResponseErrorJSON(w, http.StatusNotFound)
+			ResponseErrorJSON(w, http.StatusNotFound, "MetricTypeCounter "+m.ID)
 			return
 		}
 		m.Delta = &val
 	default:
-		ResponseErrorJSON(w, http.StatusNotFound)
+		ResponseErrorJSON(w, http.StatusNotFound, "metric type not found "+m.MType)
 		return
 	}
 	if err := json.NewEncoder(w).Encode(m); err != nil {
-		ResponseErrorJSON(w, http.StatusInternalServerError)
+		ResponseErrorJSON(w, http.StatusInternalServerError, "can't encode metrics")
 		return
 	}
 
 }
 
-func ResponseErrorJSON(w http.ResponseWriter, statusCode int) {
-	log.Printf("ResponseErrorJSON with status code %d", statusCode)
+func ResponseErrorJSON(w http.ResponseWriter, statusCode int, message string) {
+	log.Printf("ResponseErrorJSON with status code %d, %s", statusCode, message)
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(statusCode)
 	statusStr := http.StatusText(statusCode)
