@@ -12,6 +12,7 @@ func CollectRuntimeMetrics() {
 	log.Println("ticker CollectRuntimeMetrics")
 	runtime.ReadMemStats(&rtm)
 	PollCount += 1
+	rand.Seed(time.Now().Unix())
 	Metrics = []Gauge{
 		{name: "Alloc", value: float64(rtm.Alloc)},
 		{name: "BuckHashSys", value: float64(rtm.BuckHashSys)},
@@ -40,6 +41,7 @@ func CollectRuntimeMetrics() {
 		{name: "StackSys", value: float64(rtm.StackSys)},
 		{name: "Sys", value: float64(rtm.Sys)},
 		{name: "TotalAlloc", value: float64(rtm.TotalAlloc)},
+		{name: "RandomValue", value: rand.Float64() * 100},
 	}
 }
 
