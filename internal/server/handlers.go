@@ -151,6 +151,10 @@ func JSONUpdateMetricsHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "No such type of metric", http.StatusNotImplemented)
 		return
 	}
+	if err := json.NewEncoder(w).Encode(m); err != nil {
+		ResponseErrorJSON(w, http.StatusInternalServerError, "can't encode metrics")
+		return
+	}
 	w.Header().Add("Content-Type", contentTypeAppJSON)
 	w.WriteHeader(http.StatusOK)
 
@@ -230,11 +234,12 @@ func ResponseErrorJSON(w http.ResponseWriter, statusCode int, message string) {
 
 func saveMetrics(m types.Metrics) error {
 	//todo mutex
-	log.Printf("saving metric %s %s %d %d\n", m.ID, m.MType, m.Delta, m.Value)
 	switch m.MType {
 	case MetricTypeGauge:
+		log.Printf("saving metric %s %s %f\n", m.ID, m.MType, *m.Value)
 		MetricGauges[m.ID] = *m.Value
 	case MetricTypeCounter:
+		log.Printf("saving metric %s %s %d\n", m.ID, m.MType, *m.Delta)
 		MetricCounters[m.ID] += *m.Delta
 	default:
 		return errors.New("no such type of metric")
