@@ -78,7 +78,7 @@ func StartServer(c types.ServerConfig) {
 	}
 
 	svr := &http.Server{
-		Addr:    addressFlag,
+		Addr:    c.ServerAddress,
 		Handler: server.Router(),
 	}
 	svr.SetKeepAlivesEnabled(false)
