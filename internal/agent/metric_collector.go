@@ -41,7 +41,6 @@ func CollectRuntimeMetrics() {
 		{name: "StackSys", value: float64(rtm.StackSys)},
 		{name: "Sys", value: float64(rtm.Sys)},
 		{name: "TotalAlloc", value: float64(rtm.TotalAlloc)},
-		{name: "RandomValue", value: rand.Float64() * 100},
 	}
 }
 
