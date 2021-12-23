@@ -21,7 +21,7 @@ var (
 
 const (
 	defaultAddress       = "localhost:8080"
-	defaultStoreInterval = 300 * time.Second
+	defaultStoreInterval = 30 * time.Second
 	defaultStoreFile     = "/tmp/devops-metrics-db.json"
 	defaultRestore       = true
 )
