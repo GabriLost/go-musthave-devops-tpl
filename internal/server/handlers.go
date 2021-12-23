@@ -156,7 +156,6 @@ func JSONUpdateMetricsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Header().Add("Content-Type", contentTypeAppJSON)
-	w.WriteHeader(http.StatusOK)
 }
 
 func JSONValueHandler(w http.ResponseWriter, r *http.Request) {
