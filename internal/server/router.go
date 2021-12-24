@@ -1,9 +1,13 @@
 package server
 
-import "github.com/go-chi/chi/v5"
+import (
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
+)
 
 func Router() chi.Router {
 	router := chi.NewRouter()
+	router.Use(middleware.Compress(5))
 	router.Get("/", AllMetricsHandler)
 	router.Get("/value/{typ}/{name}", ValueMetricHandler)
 	router.Post("/value/", JSONValueHandler)
