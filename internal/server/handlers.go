@@ -25,10 +25,10 @@ func AllMetricsHandler(w http.ResponseWriter, _ *http.Request) {
 		log.Println(err)
 		return
 	}
+	w.Header().Set("Content-Type", "text/html")
 }
 
 func LoadIndexHTML() error {
-	// todo спросить почему так
 	bytes, err := os.ReadFile("internal/server/" + HTMLFile)
 	if err != nil {
 		bytes, err = os.ReadFile(HTMLFile)
