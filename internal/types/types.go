@@ -49,13 +49,13 @@ var (
 )
 
 func (c AgentConfig) LogConfig() {
-	log.Printf(`agent address="%s", poll interval="%s" report interval="%s"`,
-		c.Address, c.PollInterval, c.ReportInterval)
+	log.Printf(`agent address="%s", poll interval="%s", report interval="%s", key="%s"`,
+		c.Address, c.PollInterval, c.ReportInterval, c.Key)
 }
 
 func (c ServerConfig) LogConfig() {
-	log.Printf(`server address="%s", file path="%s", store interval="%s", is restore="%t"`,
-		c.ServerAddress, c.FileStoragePath, c.StoreInterval, c.Restore)
+	log.Printf(`server address="%s", file path="%s", store interval="%s", is restore="%t", key="%s`,
+		c.ServerAddress, c.FileStoragePath, c.StoreInterval, c.Restore, c.Key)
 }
 
 func (m *Metrics) AddHashWithKey(key string) error {
