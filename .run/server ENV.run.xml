@@ -6,7 +6,8 @@
       <env name="STORE_FILE" value="envArgs.log" />
       <env name="RESTORE" value="true" />
       <env name="STORE_INTERVAL" value="32s" />
-      <env name="ADDRESS" value="localhost:8081" />
+      <env name="ADDRESS" value="localhost:9090" />
+      <env name="KEY" value="HELLOTHERE" />
     </envs>
     <kind value="PACKAGE" />
     <package value="github.com/GabriLost/go-musthave-devops-tpl/cmd/server" />

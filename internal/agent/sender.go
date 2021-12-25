@@ -1,6 +1,7 @@
 package agent
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/GabriLost/go-musthave-devops-tpl/internal/types"
 	"log"
@@ -22,12 +23,18 @@ func (g Gauge) SendGauge(client *http.Client) (bool, error) {
 	url := fmt.Sprintf("%s%s/update/",
 		DefaultProtocol,
 		types.SenderConfig.Address)
-	b := fmt.Sprintf(`{"id":"%s", "type":"%s", "value": %d}`,
-		g.name,
-		"gauge",
-		int(g.value))
-	log.Printf("SendGauge %s %s", b, url)
-	body := strings.NewReader(b)
+
+	var m = types.Metrics{
+		ID:    g.name,
+		MType: "gauge",
+		Value: &g.value,
+		Hash:  "",
+	}
+	m.AddHashWithKey(types.SenderConfig.Key)
+	b, _ := json.Marshal(m)
+
+	log.Printf("SendGauge %s %s", string(b), url)
+	body := strings.NewReader(string(b))
 	resp, err := client.Post(url, "application/json", body)
 	if err != nil {
 		log.Println(err)
@@ -45,12 +52,19 @@ func (c Counter) SendCounter(client *http.Client) (bool, error) {
 	url := fmt.Sprintf("%s%s/update/",
 		DefaultProtocol,
 		types.SenderConfig.Address)
-	b := fmt.Sprintf(`{"id":"%s", "type":"%s", "delta": %d}`,
-		c.name,
-		"counter",
-		c.value)
-	log.Printf("SendCounter %s %s", b, url)
-	body := strings.NewReader(b)
+
+	var m = types.Metrics{
+		ID:    c.name,
+		MType: "counter",
+		Delta: &c.value,
+		Hash:  "",
+	}
+	m.AddHashWithKey(types.SenderConfig.Key)
+	b, _ := json.Marshal(m)
+
+	log.Printf("SendCounter %s %s", string(b), url)
+
+	body := strings.NewReader(string(b))
 	resp, err := client.Post(url, "application/json", body)
 	if err != nil {
 		log.Println(err)

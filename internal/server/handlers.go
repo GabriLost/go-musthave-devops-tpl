@@ -143,12 +143,15 @@ func JSONUpdateMetricsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if err := m.CheckHashWithKey(types.SConfig.Key); err != nil {
+		ResponseErrorJSON(w, http.StatusBadRequest, "Incorrect Hash")
+		return
+	}
+
 	//todo validate
 	err := saveMetrics(m)
 	if err != nil {
-		w.Header().Set("Content-Type", contentTypeAppJSON)
-		log.Println(err)
-		http.Error(w, "No such type of metric", http.StatusNotImplemented)
+		ResponseErrorJSON(w, http.StatusNotImplemented, "No such type of metric")
 		return
 	}
 	if err := json.NewEncoder(w).Encode(m); err != nil {
@@ -231,7 +234,10 @@ func ResponseErrorJSON(w http.ResponseWriter, statusCode int, message string) {
 }
 
 func saveMetrics(m types.Metrics) error {
-	//todo mutex
+	err := m.AddHashWithKey(types.SConfig.Key)
+	if err != nil {
+		return err
+	}
 	switch m.MType {
 	case MetricTypeGauge:
 		log.Printf("saving metric %s %s %f\n", m.ID, m.MType, *m.Value)

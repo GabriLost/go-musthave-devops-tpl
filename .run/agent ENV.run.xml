@@ -3,7 +3,8 @@
     <module name="go-musthave-devops-tpl" />
     <working_directory value="$PROJECT_DIR$" />
     <envs>
-      <env name="ADDRESS" value="localhost:8080" />
+      <env name="ADDRESS" value="localhost:9090" />
+      <env name="KEY" value="HELLOTHERE" />
     </envs>
     <kind value="PACKAGE" />
     <package value="github.com/GabriLost/go-musthave-devops-tpl/cmd/agent" />
