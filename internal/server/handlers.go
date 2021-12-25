@@ -17,6 +17,7 @@ import (
 var HTMLTemplate *template.Template
 
 func AllMetricsHandler(w http.ResponseWriter, _ *http.Request) {
+	w.Header().Set("Content-Type", "text/html")
 	data := make(map[string]interface{})
 	data[MetricTypeGauge] = MetricGauges
 	data[MetricTypeCounter] = MetricCounters
@@ -25,7 +26,6 @@ func AllMetricsHandler(w http.ResponseWriter, _ *http.Request) {
 		log.Println(err)
 		return
 	}
-	w.Header().Set("Content-Type", "text/html")
 }
 
 func LoadIndexHTML() error {
