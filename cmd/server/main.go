@@ -14,9 +14,9 @@ import (
 )
 
 var (
-	addressFlag, storeFileFlag string
-	storeIntervalFlag          time.Duration
-	restoreFlag                bool
+	addressFlag, storeFileFlag, keyFlag string
+	storeIntervalFlag                   time.Duration
+	restoreFlag                         bool
 )
 
 const (
@@ -37,6 +37,7 @@ func getConfig() (types.ServerConfig, error) {
 	flag.StringVar(&storeFileFlag, "f", defaultStoreFile, "File Path")
 	flag.DurationVar(&storeIntervalFlag, "i", defaultStoreInterval, "Store Interval")
 	flag.BoolVar(&restoreFlag, "r", defaultRestore, "Restore After Start")
+	flag.StringVar(&keyFlag, "k", "", "secret Key")
 	flag.Parse()
 
 	//rewrite if env values is not empty
@@ -54,9 +55,15 @@ func getConfig() (types.ServerConfig, error) {
 	if !isSet {
 		c.StoreInterval = storeIntervalFlag
 	}
+
 	_, isSet = os.LookupEnv("RESTORE")
 	if !isSet {
 		c.Restore = restoreFlag
+	}
+
+	_, isSet = os.LookupEnv("KEY")
+	if !isSet {
+		c.Key = keyFlag
 	}
 
 	return c, nil
