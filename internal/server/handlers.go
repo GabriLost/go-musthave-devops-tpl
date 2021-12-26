@@ -207,6 +207,12 @@ func JSONValueHandler(w http.ResponseWriter, r *http.Request) {
 		ResponseErrorJSON(w, http.StatusNotFound, "metric type not found "+m.MType)
 		return
 	}
+
+	err = m.AddHashWithKey(types.SConfig.Key)
+	if err != nil {
+		ResponseErrorJSON(w, http.StatusInternalServerError, "can't calculate hash")
+		return
+	}
 	if err := json.NewEncoder(w).Encode(m); err != nil {
 		ResponseErrorJSON(w, http.StatusInternalServerError, "can't encode metrics")
 		return
