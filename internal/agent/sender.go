@@ -2,8 +2,10 @@ package agent
 
 import (
 	"fmt"
+	"github.com/GabriLost/go-musthave-devops-tpl/internal/types"
 	"log"
 	"net/http"
+	"strings"
 )
 
 type Gauge struct {
@@ -17,15 +19,16 @@ type Counter struct {
 }
 
 func (g Gauge) SendGauge(client *http.Client) (bool, error) {
-	url := fmt.Sprintf("%s%s:%s/update/%s/%s/%d",
+	url := fmt.Sprintf("%s%s/update/",
 		DefaultProtocol,
-		DefaultServer,
-		DefaultPort,
-		"gauge",
+		types.SenderConfig.Address)
+	b := fmt.Sprintf(`{"id":"%s", "type":"%s", "value": %d}`,
 		g.name,
+		"gauge",
 		int(g.value))
-	log.Println("SendGauge " + url)
-	resp, err := client.Post(url, "text/plain", nil)
+	log.Printf("SendGauge %s %s", b, url)
+	body := strings.NewReader(b)
+	resp, err := client.Post(url, "application/json", body)
 	if err != nil {
 		log.Println(err)
 		return false, err
@@ -39,15 +42,16 @@ func (g Gauge) SendGauge(client *http.Client) (bool, error) {
 }
 
 func (c Counter) SendCounter(client *http.Client) (bool, error) {
-	url := fmt.Sprintf("%s%s:%s/update/%s/%s/%d",
+	url := fmt.Sprintf("%s%s/update/",
 		DefaultProtocol,
-		DefaultServer,
-		DefaultPort,
-		"conter",
+		types.SenderConfig.Address)
+	b := fmt.Sprintf(`{"id":"%s", "type":"%s", "delta": %d}`,
 		c.name,
-		int(c.value))
-	log.Println("SendCounter " + url)
-	resp, err := client.Post(url, ContentType, nil)
+		"counter",
+		c.value)
+	log.Printf("SendCounter %s %s", b, url)
+	body := strings.NewReader(b)
+	resp, err := client.Post(url, "application/json", body)
 	if err != nil {
 		log.Println(err)
 		return false, err

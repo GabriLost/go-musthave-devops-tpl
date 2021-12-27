@@ -1,8 +1,12 @@
 package server
 
 import (
+	"encoding/json"
+	"errors"
 	"fmt"
+	"github.com/GabriLost/go-musthave-devops-tpl/internal/types"
 	"github.com/go-chi/chi/v5"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -10,24 +14,37 @@ import (
 	"text/template"
 )
 
-func GetAllHandler(w http.ResponseWriter, _ *http.Request) {
-	indexPage, err := os.ReadFile("index.html")
-	if err != nil {
-		log.Println(err)
-		os.Exit(1)
-	}
-	indexTemplate := template.Must(template.New("").Parse(string(indexPage)))
-	tmp := make(map[string]interface{})
-	tmp[MetricTypeGauge] = metricGauges
-	tmp[MetricTypeCounter] = metricCounters
-	err = indexTemplate.Execute(w, tmp)
+var HTMLTemplate *template.Template
+
+func AllMetricsHandler(w http.ResponseWriter, _ *http.Request) {
+	data := make(map[string]interface{})
+	data[MetricTypeGauge] = MetricGauges
+	data[MetricTypeCounter] = MetricCounters
+	err := HTMLTemplate.Execute(w, data)
 	if err != nil {
 		log.Println(err)
 		return
 	}
 }
 
-func PostMetricHandler(w http.ResponseWriter, r *http.Request) {
+func LoadIndexHTML() error {
+	// todo спросить почему так
+	bytes, err := os.ReadFile("internal/server/" + HTMLFile)
+	if err != nil {
+		bytes, err = os.ReadFile(HTMLFile)
+		if err != nil {
+			return err
+		}
+	}
+
+	HTMLTemplate, err = template.New("").Parse(string(bytes))
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func UpdateMetricHandler(w http.ResponseWriter, r *http.Request) {
 
 	metric := chi.URLParam(r, "typ")
 	name := chi.URLParam(r, "name")
@@ -40,32 +57,32 @@ func PostMetricHandler(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Wrong gauge value", http.StatusBadRequest)
 			return
 		}
-		metricGauges[name] = val
+		MetricGauges[name] = val
 	case MetricTypeCounter:
 		val, err := strconv.ParseInt(value, 10, 64)
 		if err != nil {
 			http.Error(w, "Wrong counter value", http.StatusBadRequest)
 			return
 		}
-		metricCounters[name] += val
+		MetricCounters[name] += val
 	default:
 		http.Error(w, "No such type of metric", http.StatusNotImplemented)
 		return
 	}
 	log.Printf("got metric %s", name)
 
-	w.Header().Add("Content-Type", contentType)
+	w.Header().Add("Content-Type", contentTypeAppJSON)
 	w.WriteHeader(http.StatusOK)
 }
 
-func GetMetricHandler(w http.ResponseWriter, r *http.Request) {
+func ValueMetricHandler(w http.ResponseWriter, r *http.Request) {
 	metricType := chi.URLParam(r, "typ")
 	metricName := chi.URLParam(r, "name")
 	switch metricType {
 	case MetricTypeGauge:
-		if val, found := metricGauges[metricName]; found {
+		if val, found := MetricGauges[metricName]; found {
 			w.WriteHeader(http.StatusOK)
-			w.Header().Add("Content-Type", contentType)
+			w.Header().Add("Content-Type", contentTypeAppJSON)
 			_, err := w.Write([]byte(fmt.Sprint(val)))
 			if err != nil {
 				log.Println(err)
@@ -75,9 +92,9 @@ func GetMetricHandler(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "There is no metric you requested", http.StatusNotFound)
 		}
 	case MetricTypeCounter:
-		if val, found := metricCounters[metricName]; found {
+		if val, found := MetricCounters[metricName]; found {
 			w.WriteHeader(http.StatusOK)
-			w.Header().Add("Content-Type", contentType)
+			w.Header().Add("Content-Type", contentTypeAppJSON)
 			_, err := w.Write([]byte(fmt.Sprint(val)))
 			if err != nil {
 				log.Println(err)
@@ -97,4 +114,134 @@ func NotImplementedHandler(w http.ResponseWriter, _ *http.Request) {
 
 func NotFoundHandler(w http.ResponseWriter, _ *http.Request) {
 	http.Error(w, "Not Found", http.StatusNotFound)
+}
+
+func BadRequestHandler(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusBadRequest)
+	w.Write([]byte("Bad Request"))
+}
+
+func JSONUpdateMetricsHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Header.Get("Content-Type") != contentTypeAppJSON {
+		w.WriteHeader(http.StatusBadRequest)
+		_, err := w.Write([]byte(`{"Status":"Bad Request"}`))
+		if err != nil {
+			log.Println("Wrong content type")
+			return
+		}
+		return
+	}
+
+	var m types.Metrics
+	if err := json.NewDecoder(r.Body).Decode(&m); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		_, err := w.Write([]byte(`{"Status":"Bad Request"}`))
+		if err != nil {
+			log.Println("Decode problem")
+			return
+		}
+		return
+	}
+
+	//todo validate
+	err := saveMetrics(m)
+	if err != nil {
+		w.Header().Set("Content-Type", contentTypeAppJSON)
+		log.Println(err)
+		http.Error(w, "No such type of metric", http.StatusNotImplemented)
+		return
+	}
+	if err := json.NewEncoder(w).Encode(m); err != nil {
+		ResponseErrorJSON(w, http.StatusInternalServerError, "can't encode metrics")
+		return
+	}
+	w.Header().Add("Content-Type", contentTypeAppJSON)
+}
+
+func JSONValueHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Header.Get("Content-Type") != "application/json" {
+		ResponseErrorJSON(w, http.StatusBadRequest, "Header type is not \"application/json\"")
+		return
+	}
+
+	body, err := ioutil.ReadAll(r.Body)
+	w.Header().Set("Content-Type", "application/json")
+
+	if err != nil {
+		ResponseErrorJSON(w, http.StatusInternalServerError, "can't read body")
+		return
+	}
+
+	var m types.Metrics
+
+	err = json.Unmarshal(body, &m)
+	if err != nil {
+		ResponseErrorJSON(w, http.StatusBadRequest, "can't Unmarshal body")
+		return
+	}
+
+	if m.ID == "" {
+		ResponseErrorJSON(w, http.StatusBadRequest, "ID(metricName) is null")
+		return
+	}
+
+	switch m.MType {
+	case MetricTypeGauge:
+		val, ok := MetricGauges[m.ID]
+		if !ok {
+			ResponseErrorJSON(w, http.StatusNotFound, "MetricTypeGauge "+m.ID)
+			return
+		}
+		m.Value = &val
+	case MetricTypeCounter:
+		val, ok := MetricCounters[m.ID]
+		if !ok {
+			ResponseErrorJSON(w, http.StatusNotFound, "MetricTypeCounter "+m.ID)
+			return
+		}
+		m.Delta = &val
+	default:
+		ResponseErrorJSON(w, http.StatusNotFound, "metric type not found "+m.MType)
+		return
+	}
+	if err := json.NewEncoder(w).Encode(m); err != nil {
+		ResponseErrorJSON(w, http.StatusInternalServerError, "can't encode metrics")
+		return
+	}
+
+}
+
+func ResponseErrorJSON(w http.ResponseWriter, statusCode int, message string) {
+	log.Printf("ResponseErrorJSON with status code %d, %s", statusCode, message)
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(statusCode)
+	statusStr := http.StatusText(statusCode)
+	if statusStr == "" {
+		statusStr = "UNKNOWN"
+	}
+	type Response struct {
+		Status string `json:"Status"`
+	}
+
+	r := Response{Status: statusStr}
+	err := json.NewEncoder(w).Encode(&r)
+	if err != nil {
+		return
+	}
+}
+
+func saveMetrics(m types.Metrics) error {
+	//todo mutex
+	switch m.MType {
+	case MetricTypeGauge:
+		log.Printf("saving metric %s %s %f\n", m.ID, m.MType, *m.Value)
+		MetricGauges[m.ID] = *m.Value
+	case MetricTypeCounter:
+		log.Printf("saving metric %s %s %d\n", m.ID, m.MType, *m.Delta)
+		MetricCounters[m.ID] += *m.Delta
+	default:
+		return errors.New("no such type of metric")
+	}
+	return nil
+
 }

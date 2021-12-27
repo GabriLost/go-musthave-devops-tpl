@@ -1,0 +1,15 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="server PA" type="GoApplicationRunConfiguration" factoryName="Go Application">
+    <module name="go-musthave-devops-tpl" />
+    <working_directory value="$PROJECT_DIR$" />
+    <parameters value="-a=localhost:9090 -r=true -i=30s -f=pa.log" />
+    <envs>
+      <env name="ADDRESS" value="localhost:8080" />
+    </envs>
+    <kind value="PACKAGE" />
+    <package value="github.com/GabriLost/go-musthave-devops-tpl/cmd/server" />
+    <directory value="$PROJECT_DIR$" />
+    <filePath value="$PROJECT_DIR$/cmd/server/main.go" />
+    <method v="2" />
+  </configuration>
+</component>

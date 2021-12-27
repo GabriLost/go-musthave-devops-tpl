@@ -7,11 +7,12 @@ import (
 	"time"
 )
 
-func StoreRuntimeMetrics() {
+func CollectRuntimeMetrics() {
 	var rtm runtime.MemStats
-	log.Println("ticker StoreRuntimeMetrics")
+	log.Println("ticker CollectRuntimeMetrics")
 	runtime.ReadMemStats(&rtm)
 	PollCount += 1
+	rand.Seed(time.Now().Unix())
 	Metrics = []Gauge{
 		{name: "Alloc", value: float64(rtm.Alloc)},
 		{name: "BuckHashSys", value: float64(rtm.BuckHashSys)},
@@ -39,6 +40,7 @@ func StoreRuntimeMetrics() {
 		{name: "StackInuse", value: float64(rtm.StackInuse)},
 		{name: "StackSys", value: float64(rtm.StackSys)},
 		{name: "Sys", value: float64(rtm.Sys)},
+		{name: "TotalAlloc", value: float64(rtm.TotalAlloc)},
 	}
 }
 
