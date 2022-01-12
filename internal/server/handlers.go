@@ -287,10 +287,8 @@ func saveMetrics(m types.Metrics) error {
 	}
 	switch m.MType {
 	case MetricTypeGauge:
-		log.Printf("saving metric %s %s %f\n", m.ID, m.MType, *m.Value)
 		SaveGauge(m.ID, *m.Value)
 	case MetricTypeCounter:
-		log.Printf("saving metric %s %s %d\n", m.ID, m.MType, *m.Delta)
 		SaveCounter(m.ID, *m.Delta)
 	default:
 		return errors.New("no such type of metric")

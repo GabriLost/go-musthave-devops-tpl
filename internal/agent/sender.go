@@ -139,6 +139,8 @@ func SendMetrics() {
 		for _, m := range Metrics {
 			metrics = appendBatch(metrics, m.name, m.value)
 		}
+		metricCounter := Counter{name: "PollCount", value: PollCount}
+		metrics = appendBatch(metrics, metricCounter.name, metricCounter.value)
 		sendMetricsBatch(metrics)
 	} else {
 		for _, i := range Metrics {
@@ -148,14 +150,16 @@ func SendMetrics() {
 				return
 			}
 		}
+		metricCounter := Counter{name: "PollCount", value: PollCount}
+		_, err := metricCounter.SendCounter(&client)
+		if err != nil {
+			log.Println("can't send Counter " + err.Error())
+			return
+		}
 	}
-	metricCounter := Counter{name: "PollCount", value: PollCount}
+
 	log.Println("Reset poll counter to zero")
 	PollCount = 0
-	_, err := metricCounter.SendCounter(&client)
-	if err != nil {
-		log.Println("can't send Counter " + err.Error())
-		return
-	}
+
 	client.CloseIdleConnections()
 }
