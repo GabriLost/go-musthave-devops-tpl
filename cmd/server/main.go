@@ -14,7 +14,7 @@ import (
 )
 
 var (
-	addressFlag, storeFileFlag, keyFlag, dbDnsFlag string
+	addressFlag, storeFileFlag, keyFlag, dbDNSFlag string
 	storeIntervalFlag                              time.Duration
 	restoreFlag                                    bool
 )
@@ -38,7 +38,7 @@ func getConfig() (types.ServerConfig, error) {
 	flag.DurationVar(&storeIntervalFlag, "i", defaultStoreInterval, "Store Interval")
 	flag.BoolVar(&restoreFlag, "r", defaultRestore, "Restore After Start")
 	flag.StringVar(&keyFlag, "k", "", "Secret Key")
-	flag.StringVar(&dbDnsFlag, "d", "", "Database DNS")
+	flag.StringVar(&dbDNSFlag, "d", "", "Database DNS")
 
 	flag.Parse()
 
@@ -70,7 +70,7 @@ func getConfig() (types.ServerConfig, error) {
 
 	_, isSet = os.LookupEnv("DATABASE_DSN")
 	if !isSet {
-		c.DatabaseDSN = dbDnsFlag
+		c.DatabaseDSN = dbDNSFlag
 	}
 
 	return c, nil
@@ -87,12 +87,21 @@ func StartServer(c types.ServerConfig) {
 		log.Printf("failed to connect db: %v", err)
 	}
 
-	if c.Restore && c.FileStoragePath != "" {
-		server.LoadMetrics(c)
+	if c.Restore {
+		// db storage has priority
+		if c.DatabaseDSN != "" {
+			if err := server.LoadStatsDB(); err != nil {
+				log.Print(err)
+			}
+		} else if c.FileStoragePath != "" {
+			if err := server.LoadMetrics(c); err != nil {
+				log.Print(err)
+			}
+		}
 	}
-
-	if c.StoreInterval > 0 && c.FileStoragePath != "" {
-		go server.SaveMetrics(c)
+	//save into file, if DatabaseDSN is empty
+	if c.DatabaseDSN == "" && c.StoreInterval > 0 && c.FileStoragePath != "" {
+		go server.SaveMetricsIntoFileBySchedule(c)
 	}
 
 	svr := &http.Server{

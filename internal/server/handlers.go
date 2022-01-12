@@ -59,14 +59,14 @@ func UpdateMetricHandler(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Wrong gauge value", http.StatusBadRequest)
 			return
 		}
-		MetricGauges[name] = val
+		SaveGauge(name, val)
 	case MetricTypeCounter:
 		val, err := strconv.ParseInt(value, 10, 64)
 		if err != nil {
 			http.Error(w, "Wrong counter value", http.StatusBadRequest)
 			return
 		}
-		MetricCounters[name] += val
+		SaveCounter(name, val)
 	default:
 		http.Error(w, "No such type of metric", http.StatusNotImplemented)
 		return
@@ -249,10 +249,10 @@ func saveMetrics(m types.Metrics) error {
 	switch m.MType {
 	case MetricTypeGauge:
 		log.Printf("saving metric %s %s %f\n", m.ID, m.MType, *m.Value)
-		MetricGauges[m.ID] = *m.Value
+		SaveGauge(m.ID, *m.Value)
 	case MetricTypeCounter:
 		log.Printf("saving metric %s %s %d\n", m.ID, m.MType, *m.Delta)
-		MetricCounters[m.ID] += *m.Delta
+		SaveCounter(m.ID, *m.Delta)
 	default:
 		return errors.New("no such type of metric")
 	}
