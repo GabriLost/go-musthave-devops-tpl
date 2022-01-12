@@ -26,7 +26,7 @@ func SaveGauge(name string, value float64) {
 func SaveCounter(name string, delta int64) {
 	MetricCounters[name] += delta
 	if types.SConfig.DatabaseDSN != "" {
-		err := SaveCounterDB(name, delta)
+		err := SaveCounterDB(name, MetricCounters[name])
 		if err != nil {
 			return
 		}
