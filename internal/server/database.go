@@ -20,7 +20,7 @@ func ConnectDB() (err error) {
 
 	log.Printf("Start migrating database \n")
 
-	err = goose.Up(DB, ".")
+	err = goose.Up(DB, "internal/migrations")
 	if err != nil {
 		return err
 	}
