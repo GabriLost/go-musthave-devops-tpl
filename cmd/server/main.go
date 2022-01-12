@@ -14,9 +14,9 @@ import (
 )
 
 var (
-	addressFlag, storeFileFlag, keyFlag string
-	storeIntervalFlag                   time.Duration
-	restoreFlag                         bool
+	addressFlag, storeFileFlag, keyFlag, dbDnsFlag string
+	storeIntervalFlag                              time.Duration
+	restoreFlag                                    bool
 )
 
 const (
@@ -37,7 +37,9 @@ func getConfig() (types.ServerConfig, error) {
 	flag.StringVar(&storeFileFlag, "f", defaultStoreFile, "File Path")
 	flag.DurationVar(&storeIntervalFlag, "i", defaultStoreInterval, "Store Interval")
 	flag.BoolVar(&restoreFlag, "r", defaultRestore, "Restore After Start")
-	flag.StringVar(&keyFlag, "k", "", "secret Key")
+	flag.StringVar(&keyFlag, "k", "", "Secret Key")
+	flag.StringVar(&dbDnsFlag, "d", "", "Database DNS")
+
 	flag.Parse()
 
 	//rewrite if env values is not empty
@@ -66,6 +68,11 @@ func getConfig() (types.ServerConfig, error) {
 		c.Key = keyFlag
 	}
 
+	_, isSet = os.LookupEnv("DATABASE_DSN")
+	if !isSet {
+		c.DatabaseDSN = dbDnsFlag
+	}
+
 	return c, nil
 }
 
@@ -74,6 +81,10 @@ func StartServer(c types.ServerConfig) {
 	err := server.LoadIndexHTML()
 	if err != nil {
 		log.Println("index page not loaded")
+	}
+
+	if err := server.ConnectDB(); err != nil {
+		log.Printf("failed to connect db: %v", err)
 	}
 
 	if c.Restore && c.FileStoragePath != "" {

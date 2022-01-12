@@ -9,6 +9,7 @@ func Router() chi.Router {
 	router := chi.NewRouter()
 	router.Use(middleware.Compress(5))
 	router.Get("/", AllMetricsHandler)
+	router.Get("/ping", PingDB)
 	router.Get("/value/{typ}/{name}", ValueMetricHandler)
 	router.Post("/value/", JSONValueHandler)
 	router.Post("/update/{typ}/{name}/{value}", UpdateMetricHandler)

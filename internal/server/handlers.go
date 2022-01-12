@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -12,6 +13,7 @@ import (
 	"os"
 	"strconv"
 	"text/template"
+	"time"
 )
 
 var HTMLTemplate *template.Template
@@ -256,4 +258,20 @@ func saveMetrics(m types.Metrics) error {
 	}
 	return nil
 
+}
+
+func PingDB(w http.ResponseWriter, r *http.Request) {
+	if DB == nil {
+		log.Printf("database is not connected")
+		ResponseErrorJSON(w, http.StatusInternalServerError, "Internal Server Error")
+		return
+	}
+	ctx, cancel := context.WithTimeout(r.Context(), 1*time.Second)
+	defer cancel()
+	if err := DB.PingContext(ctx); err != nil {
+		ResponseErrorJSON(w, http.StatusInternalServerError, "Internal Server Error")
+		return
+	}
+
+	ResponseErrorJSON(w, http.StatusOK, "OK")
 }

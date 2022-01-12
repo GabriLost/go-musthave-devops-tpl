@@ -8,6 +8,7 @@
       <env name="STORE_INTERVAL" value="32s" />
       <env name="ADDRESS" value="127.0.0.1:8080" />
       <env name="KEY" value="HELLOTHERE" />
+      <env name="DATABASE_DSN" value="postgresql://postgres:password@localhost:5432/postgres" />
     </envs>
     <kind value="PACKAGE" />
     <package value="github.com/GabriLost/go-musthave-devops-tpl/cmd/server" />

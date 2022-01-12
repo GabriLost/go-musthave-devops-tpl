@@ -36,6 +36,7 @@ type (
 		StoreInterval   time.Duration `env:"STORE_INTERVAL"`
 		Restore         bool          `env:"RESTORE"`
 		Key             string        `env:"KEY"`
+		DatabaseDSN     string        `env:"DATABASE_DSN"`
 	}
 )
 
