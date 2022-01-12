@@ -16,6 +16,7 @@ func Router() chi.Router {
 	router.Post("/update/{typ}/{name}", BadRequestHandler)
 	router.Post("/update/{typ}/", NotFoundHandler)
 	router.Post("/update/", JSONUpdateMetricsHandler)
+	router.Post("/updates/", JSONUpdatesMetricsHandler)
 	router.Post("/update/*", NotImplementedHandler)
 	return router
 }

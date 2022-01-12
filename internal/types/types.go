@@ -29,6 +29,7 @@ type (
 		PollInterval   time.Duration `env:"POLL_INTERVAL"`
 		ReportInterval time.Duration `env:"REPORT_INTERVAL"`
 		Key            string        `env:"KEY"`
+		UseBatch       bool
 	}
 	ServerConfig struct {
 		ServerAddress   string        `env:"ADDRESS"`
@@ -45,13 +46,14 @@ var (
 		Address:        "localhost:8080",
 		PollInterval:   2,
 		ReportInterval: 5,
+		UseBatch:       true,
 	}
 	SConfig = ServerConfig{}
 )
 
 func (c AgentConfig) LogConfig() {
-	log.Printf(`agent address="%s", poll interval="%s", report interval="%s", key="%s"`,
-		c.Address, c.PollInterval, c.ReportInterval, c.Key)
+	log.Printf(`agent address="%s", poll interval="%s", report interval="%s", key="%s", isBatch="%t"'`,
+		c.Address, c.PollInterval, c.ReportInterval, c.Key, c.UseBatch)
 }
 
 func (c ServerConfig) LogConfig() {

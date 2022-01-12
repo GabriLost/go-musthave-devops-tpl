@@ -1,6 +1,7 @@
 package agent
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"github.com/GabriLost/go-musthave-devops-tpl/internal/types"
@@ -78,15 +79,74 @@ func (c Counter) SendCounter(client *http.Client) (bool, error) {
 	return true, nil
 }
 
+func appendBatch(initial []types.Metrics, name string, data interface{}) []types.Metrics {
+	if initial == nil {
+		log.Print("addBatch: trying to add to nil slice")
+	}
+	switch v := data.(type) {
+	case int64:
+		delta := v
+		m := types.Metrics{
+			ID:    name,
+			MType: "counter",
+			Delta: &delta,
+		}
+		m.AddHashWithKey(types.SenderConfig.Key)
+		return append(initial, m)
+	case float64:
+		value := v
+		m := types.Metrics{
+			ID:    name,
+			MType: "gauge",
+			Value: &value,
+		}
+		m.AddHashWithKey(types.SenderConfig.Key)
+		return append(initial, m)
+	default:
+		return initial
+	}
+}
+
+func sendMetricsBatch(metrics []types.Metrics) {
+
+	log.Println("Total metrics in Batch is", len(metrics))
+
+	var body bytes.Buffer
+	if err := json.NewEncoder(&body).Encode(metrics); err != nil {
+		log.Fatal(err)
+	}
+	url := fmt.Sprintf("%s%s/updates/",
+		DefaultProtocol,
+		types.SenderConfig.Address)
+	resp, err := http.Post(url, "application/json", &body)
+	if err != nil {
+		log.Print(err)
+		return
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		log.Printf("Sending %s, http status %d", url, resp.StatusCode)
+	}
+}
+
 func SendMetrics() {
 	Metrics = StoreRandomMetrics(Metrics)
-	log.Println("Total metrics is ", len(Metrics))
+	log.Println("Total metrics is", len(Metrics))
 	client := http.Client{Timeout: DefaultTimeout}
-	for _, i := range Metrics {
-		_, err := i.SendGauge(&client)
-		if err != nil {
-			log.Println("can't send Gauge " + err.Error())
-			return
+	if types.SenderConfig.UseBatch {
+		metrics := make([]types.Metrics, 0, len(Metrics))
+		for _, m := range Metrics {
+			metrics = appendBatch(metrics, m.name, m.value)
+		}
+		sendMetricsBatch(metrics)
+	} else {
+		for _, i := range Metrics {
+			_, err := i.SendGauge(&client)
+			if err != nil {
+				log.Println("can't send Gauge " + err.Error())
+				return
+			}
 		}
 	}
 	metricCounter := Counter{name: "PollCount", value: PollCount}

@@ -67,6 +67,7 @@ func main() {
 		log.Fatal()
 	}
 	types.SenderConfig = cfg
+	types.SenderConfig.UseBatch = true
 	types.SenderConfig.LogConfig()
 
 	go agent.Schedule(agent.CollectRuntimeMetrics, types.SenderConfig.PollInterval)

@@ -150,7 +150,6 @@ func JSONUpdateMetricsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	//todo validate
 	err := saveMetrics(m)
 	if err != nil {
 		ResponseErrorJSON(w, http.StatusNotImplemented, "No such type of metric")
@@ -159,6 +158,46 @@ func JSONUpdateMetricsHandler(w http.ResponseWriter, r *http.Request) {
 	if err := json.NewEncoder(w).Encode(m); err != nil {
 		ResponseErrorJSON(w, http.StatusInternalServerError, "can't encode metrics")
 		return
+	}
+	w.Header().Add("Content-Type", contentTypeAppJSON)
+}
+
+func JSONUpdatesMetricsHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Header.Get("Content-Type") != contentTypeAppJSON {
+		w.WriteHeader(http.StatusBadRequest)
+		_, err := w.Write([]byte(`{"Status":"Bad Request"}`))
+		if err != nil {
+			log.Println("Wrong content type")
+			return
+		}
+		return
+	}
+
+	var metrics []types.Metrics
+	if err := json.NewDecoder(r.Body).Decode(&metrics); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		_, err := w.Write([]byte(`{"Status":"Bad Request"}`))
+		if err != nil {
+			log.Println("Decode problem")
+			return
+		}
+		return
+	}
+
+	for _, m := range metrics {
+		if err := m.CheckHashWithKey(types.SConfig.Key); err != nil {
+			ResponseErrorJSON(w, http.StatusBadRequest, "Incorrect Hash")
+			return
+		}
+		err := saveMetrics(m)
+		if err != nil {
+			ResponseErrorJSON(w, http.StatusNotImplemented, "No such type of metric "+m.ID)
+			return
+		}
+		if err := json.NewEncoder(w).Encode(m); err != nil {
+			ResponseErrorJSON(w, http.StatusInternalServerError, "can't encode metrics "+m.ID)
+			return
+		}
 	}
 	w.Header().Add("Content-Type", contentTypeAppJSON)
 }
