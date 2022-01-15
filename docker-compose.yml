@@ -1,0 +1,14 @@
+version: "3.9"
+services:
+  postgres:
+    image: postgres:13.3
+    container_name: postgres_container
+    restart: always
+    environment:
+      POSTGRES_DB: "postgres"
+      POSTGRES_USER: "postgres"
+      POSTGRES_PASSWORD: "password"
+    volumes:
+      - .:/docker-initdb.d
+    ports:
+      - "5432:5432"

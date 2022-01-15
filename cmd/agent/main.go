@@ -14,7 +14,7 @@ import (
 
 var (
 	pollInterval, reportIntervalFlag time.Duration
-	addressFlag                      string
+	addressFlag, keyFlag             string
 )
 
 const (
@@ -33,6 +33,7 @@ func getConfig() (types.AgentConfig, error) {
 	flag.StringVar(&addressFlag, "a", defaultAddress, "server address")
 	flag.DurationVar(&reportIntervalFlag, "r", defaultReportInterval, "report interval")
 	flag.DurationVar(&pollInterval, "p", defaultPollInterval, "poll interval")
+	flag.StringVar(&keyFlag, "k", "", "secret Key")
 	flag.Parse()
 
 	//rewrite if ENV values is not empty
@@ -51,6 +52,11 @@ func getConfig() (types.AgentConfig, error) {
 		c.PollInterval = pollInterval
 	}
 
+	_, isSet = os.LookupEnv("KEY")
+	if !isSet {
+		c.Key = keyFlag
+	}
+
 	return c, nil
 }
 
@@ -61,6 +67,7 @@ func main() {
 		log.Fatal()
 	}
 	types.SenderConfig = cfg
+	types.SenderConfig.UseBatch = true
 	types.SenderConfig.LogConfig()
 
 	go agent.Schedule(agent.CollectRuntimeMetrics, types.SenderConfig.PollInterval)

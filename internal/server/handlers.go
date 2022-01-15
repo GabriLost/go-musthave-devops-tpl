@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -12,11 +13,13 @@ import (
 	"os"
 	"strconv"
 	"text/template"
+	"time"
 )
 
 var HTMLTemplate *template.Template
 
 func AllMetricsHandler(w http.ResponseWriter, _ *http.Request) {
+	w.Header().Set("Content-Type", "text/html")
 	data := make(map[string]interface{})
 	data[MetricTypeGauge] = MetricGauges
 	data[MetricTypeCounter] = MetricCounters
@@ -28,7 +31,6 @@ func AllMetricsHandler(w http.ResponseWriter, _ *http.Request) {
 }
 
 func LoadIndexHTML() error {
-	// todo спросить почему так
 	bytes, err := os.ReadFile("internal/server/" + HTMLFile)
 	if err != nil {
 		bytes, err = os.ReadFile(HTMLFile)
@@ -57,14 +59,14 @@ func UpdateMetricHandler(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Wrong gauge value", http.StatusBadRequest)
 			return
 		}
-		MetricGauges[name] = val
+		SaveGauge(name, val)
 	case MetricTypeCounter:
 		val, err := strconv.ParseInt(value, 10, 64)
 		if err != nil {
 			http.Error(w, "Wrong counter value", http.StatusBadRequest)
 			return
 		}
-		MetricCounters[name] += val
+		SaveCounter(name, val)
 	default:
 		http.Error(w, "No such type of metric", http.StatusNotImplemented)
 		return
@@ -143,17 +145,59 @@ func JSONUpdateMetricsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	//todo validate
+	if err := m.CheckHashWithKey(types.SConfig.Key); err != nil {
+		ResponseErrorJSON(w, http.StatusBadRequest, "Incorrect Hash")
+		return
+	}
+
 	err := saveMetrics(m)
 	if err != nil {
-		w.Header().Set("Content-Type", contentTypeAppJSON)
-		log.Println(err)
-		http.Error(w, "No such type of metric", http.StatusNotImplemented)
+		ResponseErrorJSON(w, http.StatusNotImplemented, "No such type of metric")
 		return
 	}
 	if err := json.NewEncoder(w).Encode(m); err != nil {
 		ResponseErrorJSON(w, http.StatusInternalServerError, "can't encode metrics")
 		return
+	}
+	w.Header().Add("Content-Type", contentTypeAppJSON)
+}
+
+func JSONUpdatesMetricsHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Header.Get("Content-Type") != contentTypeAppJSON {
+		w.WriteHeader(http.StatusBadRequest)
+		_, err := w.Write([]byte(`{"Status":"Bad Request"}`))
+		if err != nil {
+			log.Println("Wrong content type")
+			return
+		}
+		return
+	}
+
+	var metrics []types.Metrics
+	if err := json.NewDecoder(r.Body).Decode(&metrics); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		_, err := w.Write([]byte(`{"Status":"Bad Request"}`))
+		if err != nil {
+			log.Println("Decode problem")
+			return
+		}
+		return
+	}
+
+	for _, m := range metrics {
+		if err := m.CheckHashWithKey(types.SConfig.Key); err != nil {
+			ResponseErrorJSON(w, http.StatusBadRequest, "Incorrect Hash")
+			return
+		}
+		err := saveMetrics(m)
+		if err != nil {
+			ResponseErrorJSON(w, http.StatusNotImplemented, "No such type of metric "+m.ID)
+			return
+		}
+		if err := json.NewEncoder(w).Encode(m); err != nil {
+			ResponseErrorJSON(w, http.StatusInternalServerError, "can't encode metrics "+m.ID)
+			return
+		}
 	}
 	w.Header().Add("Content-Type", contentTypeAppJSON)
 }
@@ -204,6 +248,12 @@ func JSONValueHandler(w http.ResponseWriter, r *http.Request) {
 		ResponseErrorJSON(w, http.StatusNotFound, "metric type not found "+m.MType)
 		return
 	}
+
+	err = m.AddHashWithKey(types.SConfig.Key)
+	if err != nil {
+		ResponseErrorJSON(w, http.StatusInternalServerError, "can't calculate hash")
+		return
+	}
 	if err := json.NewEncoder(w).Encode(m); err != nil {
 		ResponseErrorJSON(w, http.StatusInternalServerError, "can't encode metrics")
 		return
@@ -231,17 +281,34 @@ func ResponseErrorJSON(w http.ResponseWriter, statusCode int, message string) {
 }
 
 func saveMetrics(m types.Metrics) error {
-	//todo mutex
+	err := m.AddHashWithKey(types.SConfig.Key)
+	if err != nil {
+		return err
+	}
 	switch m.MType {
 	case MetricTypeGauge:
-		log.Printf("saving metric %s %s %f\n", m.ID, m.MType, *m.Value)
-		MetricGauges[m.ID] = *m.Value
+		SaveGauge(m.ID, *m.Value)
 	case MetricTypeCounter:
-		log.Printf("saving metric %s %s %d\n", m.ID, m.MType, *m.Delta)
-		MetricCounters[m.ID] += *m.Delta
+		SaveCounter(m.ID, *m.Delta)
 	default:
 		return errors.New("no such type of metric")
 	}
 	return nil
 
+}
+
+func PingDB(w http.ResponseWriter, r *http.Request) {
+	if DB == nil {
+		log.Printf("database is not connected")
+		ResponseErrorJSON(w, http.StatusInternalServerError, "Internal Server Error")
+		return
+	}
+	ctx, cancel := context.WithTimeout(r.Context(), 1*time.Second)
+	defer cancel()
+	if err := DB.PingContext(ctx); err != nil {
+		ResponseErrorJSON(w, http.StatusInternalServerError, "Internal Server Error")
+		return
+	}
+
+	ResponseErrorJSON(w, http.StatusOK, "OK")
 }
