@@ -71,6 +71,7 @@ func main() {
 	types.SenderConfig.LogConfig()
 
 	go agent.Schedule(agent.CollectRuntimeMetrics, types.SenderConfig.PollInterval)
+	go agent.Schedule(agent.CollectUtilizationMetrics, types.SenderConfig.PollInterval)
 	go agent.Schedule(agent.SendMetrics, types.SenderConfig.ReportInterval)
 
 	cancelSignal := make(chan os.Signal, 1)

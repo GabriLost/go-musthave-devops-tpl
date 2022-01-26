@@ -1,9 +1,12 @@
 package agent
 
 import (
+	"github.com/shirou/gopsutil/v3/cpu"
+	"github.com/shirou/gopsutil/v3/mem"
 	"log"
 	"math/rand"
 	"runtime"
+	"strconv"
 	"time"
 )
 
@@ -50,4 +53,51 @@ func StoreRandomMetrics(metrics []Gauge) []Gauge {
 	randomMetric := Gauge{name: "RandomValue", value: rand.Float64() * 100}
 	metrics = append(metrics, randomMetric)
 	return metrics
+}
+
+func CollectUtilizationMetrics() {
+	m, err := mem.VirtualMemory()
+	if err != nil {
+		log.Println(err)
+	}
+
+	UtilizationData.mu.Lock()
+	timeNow := time.Now()
+	timeDiff := timeNow.Sub(UtilizationData.CPUutilLastTime)
+
+	UtilizationData.CPUutilLastTime = timeNow
+	UtilizationData.TotalMemory = Gauge{
+		name:  "TotalMemory",
+		value: float64(m.Total),
+	}
+	UtilizationData.FreeMemory = Gauge{
+		name:  "FreeMemory",
+		value: float64(m.Free),
+	}
+
+	cpus, err := cpu.Times(true)
+	if err != nil {
+		log.Println(err)
+	}
+	for i := range cpus {
+		newCPUTime := cpus[i].User + cpus[i].System
+		cpuUtilization := (newCPUTime - UtilizationData.CPUtime[i]) * 1000 / float64(timeDiff.Milliseconds())
+		UtilizationData.CPUutilizations[i] = Gauge{
+			name:  "CPUutilization" + strconv.Itoa(i+1),
+			value: cpuUtilization,
+		}
+		UtilizationData.CPUtime[i] = newCPUTime
+	}
+	UtilizationData.mu.Unlock()
+}
+
+func init() {
+	cpuStat, err := cpu.Times(true)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+	numCPU := len(cpuStat)
+	UtilizationData.CPUtime = make([]float64, numCPU)
+	UtilizationData.CPUutilizations = make([]Gauge, numCPU)
 }
