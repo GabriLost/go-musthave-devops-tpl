@@ -132,6 +132,11 @@ func sendMetricsBatch(metrics []types.Metrics) {
 
 func SendMetrics() {
 	Metrics = StoreRandomMetrics(Metrics)
+
+	Metrics = append(Metrics, UtilizationData.TotalMemory)
+	Metrics = append(Metrics, UtilizationData.FreeMemory)
+	Metrics = append(Metrics, UtilizationData.CPUutilizations...)
+
 	log.Println("Total metrics is", len(Metrics))
 	client := http.Client{Timeout: DefaultTimeout}
 	if types.SenderConfig.UseBatch {
